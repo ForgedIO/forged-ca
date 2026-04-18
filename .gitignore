@@ -70,3 +70,6 @@ htmlcov/
 # Tailwind / frontend build
 static/css/tailwind.css
 static/css/app.css
+
+# Design scratch
+documents/
