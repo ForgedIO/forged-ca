@@ -12,6 +12,13 @@ EXEMPT_PATH_PREFIXES = (
     "/static/",
     "/trust/",
     "/accounts/",
+    # Pre-wizard hygiene paths — ForcePasswordChange / ForceMFASetup pin the
+    # admin here; this middleware must not bounce them back to /wizard/ or
+    # we get a loop.
+    "/change-password/",
+    "/mfa/",
+    "/login/",
+    "/logout/",
 )
 
 
