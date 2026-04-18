@@ -3,6 +3,53 @@
 
 {% block content %}
 <div class="space-y-6 max-w-5xl mx-auto">
+
+    {% if config.webui_cert_path %}
+        <div class="card bg-base-100 shadow border-l-4 border-success">
+            <div class="card-body">
+                <h2 class="card-title">Web UI signed by ForgedCA</h2>
+                <p class="text-sm opacity-70 mt-0">
+                    nginx is serving this admin UI with a cert issued by your
+                    {% if config.is_issuing %}<strong>Issuing CA</strong>{% elif config.is_intermediate %}<strong>Intermediate CA</strong>{% else %}<strong>Root CA</strong>{% endif %}.
+                    Devices that trust the Root see a valid lock on this page.
+                </p>
+                <form method="post" action="{% url 'ca:sign_webui' %}" class="mt-2">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-ghost">Rotate &middot; re-issue</button>
+                </form>
+            </div>
+        </div>
+    {% else %}
+        <div class="card bg-base-100 shadow border-l-4 border-warning">
+            <div class="card-body">
+                <h2 class="card-title">Web UI is still using a temporary self-signed cert</h2>
+                <p class="text-sm opacity-80 mt-0">
+                    Replace it with a cert signed by your new CA. Two steps, in order &mdash; <strong>do step 1 first</strong>, otherwise clicking step 2 will lock your browser out of this page.
+                </p>
+
+                <div class="mt-4">
+                    <h3 class="font-semibold">Step 1. Install the Root CA on this device</h3>
+                    <p class="text-sm opacity-70 mt-1">Download the Root from the <strong>Trust downloads</strong> card below, then follow the instructions for whichever OS/browser you're on right now.</p>
+                    <div class="mt-3">
+                        {% include "partials/trust_install_instructions.html" %}
+                    </div>
+                </div>
+
+                <div class="mt-5">
+                    <h3 class="font-semibold">Step 2. Sign this Web UI</h3>
+                    <p class="text-sm opacity-70 mt-1">Once step 1 is done <strong>on this device</strong>, click the button. nginx will reload with a fresh cert from your new CA.</p>
+                    <div class="alert alert-warning mt-2 text-sm">
+                        <span>If you click before installing the Root, the browser will block this page as signed by an unknown CA and you'll have no way back in except from another device (or by restoring <code class="font-mono">/opt/forgedca/certs/forgedca.crt</code> by hand from SSH).</span>
+                    </div>
+                    <form method="post" action="{% url 'ca:sign_webui' %}" class="mt-3">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary">Sign Web UI with ForgedCA</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
     <div class="card bg-base-100 shadow">
         <div class="card-body">
             <h2 class="card-title">CA status</h2>
