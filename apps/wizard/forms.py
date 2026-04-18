@@ -24,9 +24,21 @@ class LifetimesForm(forms.Form):
     root_cn = forms.CharField(max_length=255, required=False)
     intermediate_cn = forms.CharField(max_length=255, required=False)
     issuing_cn = forms.CharField(max_length=255, required=False)
-    root_lifetime_days = forms.IntegerField(min_value=365, max_value=36500, initial=7300, label="Root lifetime (days)")
-    intermediate_lifetime_days = forms.IntegerField(min_value=365, max_value=36500, initial=3650, label="Intermediate lifetime (days)")
-    issuing_lifetime_days = forms.IntegerField(min_value=30, max_value=36500, initial=1825, label="Issuing lifetime (days)")
+    root_lifetime_days = forms.IntegerField(
+        min_value=365, max_value=36500, initial=7300,
+        label="Root lifetime (days)",
+        help_text="Recommended: 7300 days (20 years). Rotating the Root CA breaks trust everywhere it's installed, so private-PKI best practice is 20–25 years.",
+    )
+    intermediate_lifetime_days = forms.IntegerField(
+        min_value=365, max_value=36500, initial=3650,
+        label="Intermediate lifetime (days)",
+        help_text="Recommended: 3650 days (10 years). Must be ≤ the Root's lifetime.",
+    )
+    issuing_lifetime_days = forms.IntegerField(
+        min_value=30, max_value=36500, initial=1825,
+        label="Issuing lifetime (days)",
+        help_text="Recommended: 1825 days (5 years). Must be ≤ its parent's lifetime. This is the CA that signs day-to-day leaf certificates.",
+    )
 
     def __init__(self, *args, node_config=None, **kwargs):
         super().__init__(*args, **kwargs)

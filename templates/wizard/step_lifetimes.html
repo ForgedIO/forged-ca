@@ -28,5 +28,32 @@
 document.querySelectorAll('form input[type=text], form input[type=number]').forEach(el => {
     el.classList.add('input', 'input-bordered', 'w-full');
 });
+
+// Live "= 20 years" readout below each lifetime-days field so the admin
+// doesn't need a calculator to check the number they just typed.
+(() => {
+    const describe = (days) => {
+        if (!Number.isFinite(days) || days <= 0) return '';
+        const years = Math.floor(days / 365);
+        const rem = days - years * 365;
+        const parts = [];
+        if (years) parts.push(years + (years === 1 ? ' year' : ' years'));
+        if (rem) parts.push(rem + (rem === 1 ? ' day' : ' days'));
+        return '\u2248 ' + parts.join(', ');
+    };
+
+    document.querySelectorAll('input[name$="_lifetime_days"]').forEach(input => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'label py-0';
+        wrapper.innerHTML = '<span class="label-text-alt text-primary font-medium" aria-live="polite"></span>';
+        input.insertAdjacentElement('afterend', wrapper);
+        const out = wrapper.querySelector('span');
+        const update = () => {
+            out.textContent = describe(parseInt(input.value, 10));
+        };
+        input.addEventListener('input', update);
+        update();
+    });
+})();
 </script>
 {% endblock %}
