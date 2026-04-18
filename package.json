@@ -1,0 +1,16 @@
+{
+  "private": true,
+  "description": "Frontend dependencies and Tailwind build for ForgedCA",
+  "scripts": {
+    "build:css": "tailwindcss -i ./static/css/app.src.css -o ./static/css/app.css --minify",
+    "watch:css": "tailwindcss -i ./static/css/app.src.css -o ./static/css/app.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.17",
+    "daisyui": "^4.12.23",
+    "@tailwindcss/forms": "^0.5.9",
+    "@tailwindcss/typography": "^0.5.15",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49"
+  }
+}

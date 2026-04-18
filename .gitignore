@@ -50,3 +50,23 @@ logs/
 # Local config overrides
 config.local.*
 *.local
+
+# Django
+staticfiles/
+media/
+uploads/
+celerybeat-schedule
+celerybeat.pid
+
+# Python tooling
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+
+# Tailwind / frontend build
+static/css/tailwind.css
+static/css/app.css

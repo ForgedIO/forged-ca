@@ -1,0 +1,27 @@
+[Unit]
+Description=ForgedCA Gunicorn application server
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=forgedca
+Group=forgedca
+WorkingDirectory=/opt/forgedca
+EnvironmentFile=/opt/forgedca/.env
+RuntimeDirectory=forgedca
+RuntimeDirectoryMode=0755
+RuntimeDirectoryPreserve=yes
+ExecStart=/opt/forgedca/venv/bin/gunicorn \
+    --workers 3 \
+    --bind unix:/run/forgedca/gunicorn.sock \
+    --timeout 300 \
+    --log-level info \
+    --access-logfile /var/log/forgedca/gunicorn-access.log \
+    --error-logfile /var/log/forgedca/gunicorn-error.log \
+    forgedca.wsgi:application
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

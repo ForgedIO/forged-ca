@@ -1,0 +1,14 @@
+-- Bootstrap ForgedCA's two logical databases on a Postgres cluster.
+-- Rendered by install.sh with the generated passwords substituted.
+
+CREATE ROLE forgedca WITH LOGIN PASSWORD '{{ FORGEDCA_DB_PASSWORD }}';
+CREATE ROLE step_ca  WITH LOGIN PASSWORD '{{ STEP_CA_DB_PASSWORD }}';
+
+CREATE DATABASE forgedca OWNER forgedca;
+CREATE DATABASE step_ca  OWNER step_ca;
+
+REVOKE ALL ON DATABASE forgedca FROM PUBLIC;
+REVOKE ALL ON DATABASE step_ca  FROM PUBLIC;
+
+GRANT CONNECT ON DATABASE forgedca TO forgedca;
+GRANT CONNECT ON DATABASE step_ca  TO step_ca;

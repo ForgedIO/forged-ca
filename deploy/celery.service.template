@@ -1,0 +1,24 @@
+[Unit]
+Description=ForgedCA Celery worker + beat
+After=network.target redis-server.service postgresql.service
+Requires=redis-server.service
+
+[Service]
+Type=simple
+User=forgedca
+Group=forgedca
+WorkingDirectory=/opt/forgedca
+EnvironmentFile=/opt/forgedca/.env
+ExecStart=/opt/forgedca/venv/bin/celery \
+    -A forgedca worker \
+    -l info \
+    --concurrency=4 \
+    -B \
+    --schedule=/opt/forgedca/celerybeat-schedule
+Restart=always
+RestartSec=10
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target
