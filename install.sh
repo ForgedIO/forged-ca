@@ -402,6 +402,11 @@ systemctl daemon-reload
 # ---------------------------------------------------------------------------
 # Migrations + static
 # ---------------------------------------------------------------------------
+echo "==> Regenerating any model migrations the repo is missing..."
+sudo -u "${APP_USER}" \
+    DJANGO_SETTINGS_MODULE=forgedca.settings.production \
+    "${PYTHON}" "${APP_HOME}/manage.py" makemigrations --noinput 2>&1 | tail -10 || true
+
 echo "==> Running database migrations..."
 sudo -u "${APP_USER}" \
     DJANGO_SETTINGS_MODULE=forgedca.settings.production \

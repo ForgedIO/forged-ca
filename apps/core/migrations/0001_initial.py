@@ -43,8 +43,8 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 ("mfa_enabled", models.BooleanField(default=False)),
-                ("mfa_secret", encrypted_model_fields.fields.EncryptedCharField(blank=True, default="")),
-                ("mfa_recovery_codes", encrypted_model_fields.fields.EncryptedCharField(blank=True, default="")),
+                ("mfa_secret", encrypted_model_fields.fields.EncryptedCharField(blank=True, default="", max_length=64)),
+                ("mfa_recovery_codes", encrypted_model_fields.fields.EncryptedCharField(blank=True, default="", max_length=500)),
                 ("mfa_confirmed_at", models.DateTimeField(blank=True, null=True)),
                 (
                     "user",
