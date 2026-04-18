@@ -31,8 +31,31 @@
         </span>
     </label>
 
+    <div id="root-issuing-warning" class="alert alert-warning hidden mt-2">
+        <span>
+            <strong>Heads up.</strong> You&rsquo;ve selected Root + Issuing without Intermediate. This works, but it means your Root key must stay online to issue every leaf certificate, and a Root compromise has no clean recovery path. For better operational security &mdash; especially if you plan to run more than a handful of endpoints &mdash; enable Intermediate too so the Root can stay offline after bootstrap.
+        </span>
+    </div>
+
     <div class="card-actions justify-end mt-4">
         <button type="submit" class="btn btn-primary">Next</button>
     </div>
 </form>
+
+<script>
+(() => {
+    const root = document.querySelector('input[name=is_root]');
+    const intermediate = document.querySelector('input[name=is_intermediate]');
+    const issuing = document.querySelector('input[name=is_issuing]');
+    const warning = document.getElementById('root-issuing-warning');
+    if (!(root && intermediate && issuing && warning)) return;
+
+    const update = () => {
+        const show = root.checked && issuing.checked && !intermediate.checked;
+        warning.classList.toggle('hidden', !show);
+    };
+    [root, intermediate, issuing].forEach(el => el.addEventListener('change', update));
+    update();
+})();
+</script>
 {% endblock %}
