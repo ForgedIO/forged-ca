@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <ul class="steps w-full mb-6">
+        <li class="step {% if step >= 1 %}step-primary{% endif %}">Roles</li>
+        <li class="step {% if step >= 2 %}step-primary{% endif %}">Lifetimes</li>
+        <li class="step {% if step >= 3 %}step-primary{% endif %}">Generate</li>
+        <li class="step {% if step >= 4 %}step-primary{% endif %}">Done</li>
+    </ul>
+
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h2 class="card-title">{{ step_label }}</h2>
+            {% block wizard %}{% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}

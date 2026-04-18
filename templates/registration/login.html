@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Sign in &mdash; ForgedCA{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto">
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h2 class="card-title">Sign in</h2>
+            <form method="post">
+                {% csrf_token %}
+                {% if form.non_field_errors %}
+                    <div class="alert alert-error">{{ form.non_field_errors }}</div>
+                {% endif %}
+                <label class="form-control w-full">
+                    <div class="label"><span class="label-text">Username</span></div>
+                    <input type="text" name="username" class="input input-bordered w-full" autofocus required>
+                </label>
+                <label class="form-control w-full">
+                    <div class="label"><span class="label-text">Password</span></div>
+                    <input type="password" name="password" class="input input-bordered w-full" required>
+                </label>
+                <div class="card-actions mt-4 justify-end">
+                    <button type="submit" class="btn btn-primary">Sign in</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

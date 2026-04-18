@@ -1,0 +1,38 @@
+{% extends "wizard/_base.html" %}
+{% block title %}Roles &mdash; ForgedCA wizard{% endblock %}
+
+{% block wizard %}
+<p class="text-sm opacity-70">Pick any combination of roles this node should fulfill. Slice&nbsp;1 supports configurations that include <strong>Root</strong> (the whole chain is built locally). Configurations that need to federate to an existing parent arrive in slice&nbsp;2.</p>
+
+<form method="post" class="mt-4 space-y-3">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+        <div class="alert alert-error">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <label class="label cursor-pointer justify-start gap-3">
+        <input type="checkbox" name="is_root" class="checkbox checkbox-primary" {% if form.is_root.value %}checked{% endif %}>
+        <span class="label-text">
+            <strong>Root CA</strong> &mdash; the top of the trust chain. Self-signs.
+        </span>
+    </label>
+
+    <label class="label cursor-pointer justify-start gap-3">
+        <input type="checkbox" name="is_intermediate" class="checkbox checkbox-primary" {% if form.is_intermediate.value %}checked{% endif %}>
+        <span class="label-text">
+            <strong>Intermediate CA</strong> &mdash; signs Issuing CAs under it. Slice&nbsp;1 requires Root on the same node.
+        </span>
+    </label>
+
+    <label class="label cursor-pointer justify-start gap-3">
+        <input type="checkbox" name="is_issuing" class="checkbox checkbox-primary" {% if form.is_issuing.value %}checked{% endif %}>
+        <span class="label-text">
+            <strong>Issuing CA</strong> &mdash; issues leaf certificates (ACME + non-ACME). Slice&nbsp;1 requires Root on the same node.
+        </span>
+    </label>
+
+    <div class="card-actions justify-end mt-4">
+        <button type="submit" class="btn btn-primary">Next</button>
+    </div>
+</form>
+{% endblock %}

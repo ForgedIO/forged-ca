@@ -59,6 +59,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    "apps.wizard.middleware.WizardRedirectMiddleware",
 ]
 
 ROOT_URLCONF = "forgedca.urls"
@@ -130,6 +131,7 @@ SOCIALACCOUNT_LOGIN_ON_GET = True
 ACCOUNT_SIGNUP_REDIRECT_URL = "/"
 LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "/login/"
 
 # Logging — file + optional syslog forwarder.
 # Syslog destination is configured from the DB-backed SyslogConfig model at

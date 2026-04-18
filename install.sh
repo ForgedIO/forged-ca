@@ -216,8 +216,14 @@ rsync -a \
     --exclude='venv' \
     "${SCRIPT_DIR}/" "${APP_HOME}/"
 chown -R "${APP_USER}:${APP_USER}" "${APP_HOME}" "${LOG_DIR}"
+# /etc/step-ca/ is shared between step-ca (daemon) and forgedca (web UI) — the
+# web UI needs to write ca.json, certs, and key material during the install
+# wizard. SGID + group-write lets forgedca (a member of the step-ca group)
+# create files there; group ownership is inherited from the directory, so
+# step-ca can read what forgedca wrote.
+mkdir -p "${STEP_CA_CONFIG_DIR}/certs" "${STEP_CA_CONFIG_DIR}/secrets" "${STEP_CA_CONFIG_DIR}/db"
 chown -R "${STEP_CA_USER}:${STEP_CA_USER}" "${STEP_CA_CONFIG_DIR}" "${STEP_CA_DATA_DIR}"
-chmod 0750 "${STEP_CA_CONFIG_DIR}"
+chmod 2770 "${STEP_CA_CONFIG_DIR}" "${STEP_CA_CONFIG_DIR}/certs" "${STEP_CA_CONFIG_DIR}/secrets" "${STEP_CA_CONFIG_DIR}/db"
 chmod 0700 "${STEP_CA_DATA_DIR}"
 
 # ---------------------------------------------------------------------------
@@ -354,6 +360,22 @@ ${APP_USER} ALL=(ALL) NOPASSWD: /usr/bin/tee ${NGINX_CONF_FILE}
 ${APP_USER} ALL=(ALL) NOPASSWD: /usr/bin/tee ${APP_HOME}/deploy/acme-challenge.conf
 EOF
 chmod 440 /etc/sudoers.d/forgedca-nginx
+
+# Let the forgedca web UI start/stop/reload step-ca after the install wizard
+# renders ca.json. Narrower than blanket systemctl access.
+cat > /etc/sudoers.d/forgedca-stepca <<EOF
+${APP_USER} ALL=(ALL) NOPASSWD: /bin/systemctl start step-ca
+${APP_USER} ALL=(ALL) NOPASSWD: /bin/systemctl stop step-ca
+${APP_USER} ALL=(ALL) NOPASSWD: /bin/systemctl restart step-ca
+${APP_USER} ALL=(ALL) NOPASSWD: /bin/systemctl reload step-ca
+${APP_USER} ALL=(ALL) NOPASSWD: /bin/systemctl status step-ca
+${APP_USER} ALL=(ALL) NOPASSWD: /usr/bin/systemctl start step-ca
+${APP_USER} ALL=(ALL) NOPASSWD: /usr/bin/systemctl stop step-ca
+${APP_USER} ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart step-ca
+${APP_USER} ALL=(ALL) NOPASSWD: /usr/bin/systemctl reload step-ca
+${APP_USER} ALL=(ALL) NOPASSWD: /usr/bin/systemctl status step-ca
+EOF
+chmod 440 /etc/sudoers.d/forgedca-stepca
 
 # SELinux
 if [[ "${PKG_MANAGER}" =~ ^(dnf|yum)$ ]] && command -v getenforce &>/dev/null; then

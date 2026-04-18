@@ -1,0 +1,51 @@
+{% extends "wizard/_base.html" %}
+{% block title %}Review &mdash; ForgedCA wizard{% endblock %}
+
+{% block wizard %}
+<p class="text-sm opacity-70">Review the configuration before generating keys. Keys are written to <code class="font-mono text-xs">/etc/step-ca/secrets/</code> and certs to <code class="font-mono text-xs">/etc/step-ca/certs/</code>.</p>
+
+<div class="overflow-x-auto mt-4">
+    <table class="table">
+        <tbody>
+            <tr>
+                <th class="w-48">Roles</th>
+                <td>{{ config.roles_selected|join:" + " }}</td>
+            </tr>
+            <tr>
+                <th>Hostname</th>
+                <td>{{ config.hostname|default:"localhost" }}</td>
+            </tr>
+            <tr>
+                <th>Organization</th>
+                <td>{{ config.org }}</td>
+            </tr>
+            {% if config.is_root %}
+                <tr>
+                    <th>Root CA</th>
+                    <td><code class="font-mono text-xs">CN={{ config.root_cn }}</code> &middot; {{ config.root_lifetime_days }} days ({{ config.root_lifetime_days|divisibleby:365|yesno:"approx," }} {{ config.root_lifetime_days|stringformat:"d" }}d)</td>
+                </tr>
+            {% endif %}
+            {% if config.is_intermediate %}
+                <tr>
+                    <th>Intermediate CA</th>
+                    <td><code class="font-mono text-xs">CN={{ config.intermediate_cn }}</code> &middot; {{ config.intermediate_lifetime_days }} days &middot; signed by Root</td>
+                </tr>
+            {% endif %}
+            {% if config.is_issuing %}
+                <tr>
+                    <th>Issuing CA</th>
+                    <td><code class="font-mono text-xs">CN={{ config.issuing_cn }}</code> &middot; {{ config.issuing_lifetime_days }} days &middot; signed by {% if config.is_intermediate %}Intermediate{% else %}Root{% endif %}</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<form method="post" class="mt-4">
+    {% csrf_token %}
+    <div class="card-actions justify-between">
+        <a href="{% url 'wizard:step_lifetimes' %}" class="btn btn-ghost">Back</a>
+        <button type="submit" class="btn btn-primary">Generate keys and certs</button>
+    </div>
+</form>
+{% endblock %}

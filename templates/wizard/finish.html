@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Installed &mdash; ForgedCA{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-4">
+    <div class="alert alert-success">
+        <span><strong>PKI bootstrapped.</strong> Your chain is ready and the trust-download endpoints are live.</span>
+    </div>
+
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h2 class="card-title">What was created</h2>
+            <ul class="list-disc pl-6 space-y-1 text-sm">
+                {% if config.root_cert_path %}<li><code class="font-mono text-xs">{{ config.root_cert_path }}</code></li>{% endif %}
+                {% if config.intermediate_cert_path %}<li><code class="font-mono text-xs">{{ config.intermediate_cert_path }}</code></li>{% endif %}
+                {% if config.issuing_cert_path %}<li><code class="font-mono text-xs">{{ config.issuing_cert_path }}</code></li>{% endif %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h2 class="card-title">Next</h2>
+            <p class="text-sm">Go to the <a href="{% url 'core:home' %}" class="link">dashboard</a> to download the trust chain, or curl it directly:</p>
+            <pre class="bg-base-200 p-3 rounded text-xs overflow-x-auto"><code>curl -ko chain.pem https://{{ config.hostname|default:"localhost" }}:8443{% url 'trust:chain_pem' %}</code></pre>
+        </div>
+    </div>
+
+    <div class="text-center">
+        <a href="{% url 'core:home' %}" class="btn btn-primary">Go to dashboard</a>
+    </div>
+</div>
+{% endblock %}

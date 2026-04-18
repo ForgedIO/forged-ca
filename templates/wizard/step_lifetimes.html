@@ -1,0 +1,32 @@
+{% extends "wizard/_base.html" %}
+{% block title %}Lifetimes &mdash; ForgedCA wizard{% endblock %}
+
+{% block wizard %}
+<form method="post" class="mt-2 space-y-4">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+        <div class="alert alert-error">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    {% for field in form %}
+        <label class="form-control w-full">
+            <div class="label"><span class="label-text">{{ field.label }}</span></div>
+            {{ field }}
+            {% if field.help_text %}<div class="label"><span class="label-text-alt">{{ field.help_text }}</span></div>{% endif %}
+            {% if field.errors %}<div class="label"><span class="label-text-alt text-error">{{ field.errors }}</span></div>{% endif %}
+        </label>
+    {% endfor %}
+
+    <div class="card-actions justify-between mt-4">
+        <a href="{% url 'wizard:step_role' %}" class="btn btn-ghost">Back</a>
+        <button type="submit" class="btn btn-primary">Next</button>
+    </div>
+</form>
+
+<script>
+// DaisyUI-ize Django-rendered inputs without template hackery.
+document.querySelectorAll('form input[type=text], form input[type=number]').forEach(el => {
+    el.classList.add('input', 'input-bordered', 'w-full');
+});
+</script>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-theme="corporate">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ForgedCA{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body class="min-h-screen bg-base-200">
+<div class="navbar bg-base-100 shadow-sm">
+    <div class="container mx-auto">
+        <div class="flex-1">
+            <a href="{% url 'core:home' %}" class="btn btn-ghost text-xl normal-case">ForgedCA</a>
+        </div>
+        <div class="flex-none">
+            {% if user.is_authenticated %}
+                <span class="mr-3 text-sm opacity-70">{{ user.username }}</span>
+                <form method="post" action="{% url 'core:logout' %}" class="inline">
+                    {% csrf_token %}
+                    <button class="btn btn-sm btn-ghost" type="submit">Sign out</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<main class="container mx-auto py-8 px-4">
+    {% if messages %}
+        <div class="mb-4 space-y-2">
+            {% for m in messages %}
+                <div class="alert {% if m.tags == 'error' %}alert-error{% elif m.tags == 'warning' %}alert-warning{% elif m.tags == 'success' %}alert-success{% else %}alert-info{% endif %}">
+                    <span>{{ m }}</span>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+</main>
+
+<footer class="footer footer-center p-4 text-base-content/60">
+    <aside>
+        <p>ForgedCA &mdash; <a class="link" href="https://github.com/ForgedIO/forged-ca">ForgedIO/forged-ca</a></p>
+    </aside>
+</footer>
+</body>
+</html>
