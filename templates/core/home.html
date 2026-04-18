@@ -2,7 +2,7 @@
 {% block title %}Dashboard &mdash; ForgedCA{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
+<div class="space-y-6 max-w-5xl mx-auto">
     <div class="card bg-base-100 shadow">
         <div class="card-body">
             <h2 class="card-title">CA status</h2>
@@ -25,20 +25,10 @@
 
     <div class="card bg-base-100 shadow">
         <div class="card-body">
-            <h2 class="card-title">Trust chain</h2>
-            <p class="text-sm opacity-70">CA certificates are public material. These endpoints are unauthenticated by default so GPO/Intune/Ansible can pull them unattended.</p>
-            <div class="flex flex-wrap gap-2 mt-2">
-                {% if config.root_cert_path %}
-                    <a href="{% url 'trust:root_crt' %}" class="btn btn-sm btn-outline">Root CA (.crt)</a>
-                {% endif %}
-                {% if config.intermediate_cert_path %}
-                    <a href="{% url 'trust:intermediate_crt' %}" class="btn btn-sm btn-outline">Intermediate CA (.crt)</a>
-                {% endif %}
-                {% if config.issuing_cert_path %}
-                    <a href="{% url 'trust:issuer_crt' %}" class="btn btn-sm btn-outline">Issuer CA (.crt)</a>
-                {% endif %}
-                <a href="{% url 'trust:chain_pem' %}" class="btn btn-sm btn-primary">Full chain (.pem)</a>
-                <a href="{% url 'trust:bundle_crt' %}" class="btn btn-sm">Trust bundle (Root + Intermediate)</a>
+            <h2 class="card-title">Trust downloads</h2>
+            <p class="text-sm opacity-70 mt-0">Pick the certificate file that matches your target. Downloads are public by default so scripts / GPO / Intune / Ansible can pull them unattended &mdash; you can flip a node-level toggle to require admin auth if your environment demands it.</p>
+            <div class="mt-4">
+                {% include "partials/trust_downloads.html" %}
             </div>
         </div>
     </div>
@@ -46,7 +36,7 @@
     {% if config.is_issuing %}
         <div class="alert alert-info">
             <span>
-                <strong>step-ca daemon management:</strong> coming in slice 2. The <code class="font-mono">ca.json</code> has been written to <code class="font-mono">/etc/step-ca/ca.json</code> but the daemon has not been started. ACME provisioner support, the Client Onboarding page, and start/stop controls all arrive together in slice 2.
+                <strong>step-ca daemon management:</strong> coming in slice 2. The <code class="font-mono">ca.json</code> has been written to <code class="font-mono">/etc/step-ca/ca.json</code> but the daemon is not yet running. ACME provisioner support, the Client Onboarding page with copy-paste enrollment commands, and start/stop controls all arrive together in the next slice.
             </span>
         </div>
     {% endif %}
