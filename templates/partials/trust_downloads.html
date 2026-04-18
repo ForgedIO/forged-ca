@@ -1,0 +1,121 @@
+{# Shared trust-chain download panes. Used by wizard/finish.html and
+   core/home.html so both pages offer the same options with the same
+   explanations. Expects `config` (a NodeConfig instance) in context. #}
+{% load static %}
+
+<div class="space-y-3">
+    {# ── ROOT CA — always shown, the primary trust anchor ─────────────── #}
+    {% if config.root_cert_path %}
+    <a href="{% url 'trust:root_crt' %}"
+       class="block border border-base-300 rounded-lg p-4 hover:border-primary hover:bg-base-200 transition-colors">
+        <div class="flex items-start gap-4">
+            <div class="text-primary mt-0.5 shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 3v13M7 11l5 5 5-5M5 21h14"/>
+                </svg>
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="font-semibold">Root CA certificate</span>
+                    <span class="badge badge-sm badge-primary">Install on endpoints</span>
+                </div>
+                <p class="text-sm opacity-70 mt-1">Install on every device in your fleet that should trust certificates issued here. This is what Windows / Mac / Linux / iOS / Android load to stop getting "untrusted certificate" warnings.</p>
+                <div class="text-xs opacity-60 mt-2 flex flex-wrap gap-x-4 gap-y-1">
+                    <span><strong>Windows:</strong> GPO or Intune</span>
+                    <span><strong>macOS:</strong> Keychain or MDM</span>
+                    <span><strong>Linux:</strong> /etc/ca-certificates</span>
+                    <span><strong>iOS / Android:</strong> MDM profile</span>
+                </div>
+            </div>
+            <div class="shrink-0 text-right">
+                <div class="font-mono text-xs opacity-70">root_ca.crt</div>
+            </div>
+        </div>
+    </a>
+    {% endif %}
+
+    {# ── TRUST BUNDLE — only meaningful when an Intermediate exists ───── #}
+    {% if config.is_intermediate %}
+    <a href="{% url 'trust:bundle_crt' %}"
+       class="block border border-base-300 rounded-lg p-4 hover:border-primary hover:bg-base-200 transition-colors">
+        <div class="flex items-start gap-4">
+            <div class="text-primary mt-0.5 shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 7l9-4 9 4v6c0 5-3.5 8-9 10-5.5-2-9-5-9-10V7z"/>
+                    <path d="M8 12l3 3 5-6"/>
+                </svg>
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="font-semibold">Trust bundle</span>
+                    <span class="badge badge-sm">Root + Intermediate</span>
+                </div>
+                <p class="text-sm opacity-70 mt-1">The same trust anchors as above, plus the Intermediate CA. Use this instead of Root-only if you want devices to have both trust anchors pre-loaded (smoother if you rotate the Intermediate later).</p>
+            </div>
+            <div class="shrink-0 text-right">
+                <div class="font-mono text-xs opacity-70">bundle.crt</div>
+            </div>
+        </div>
+    </a>
+    {% endif %}
+
+    {# ── FULL CHAIN — only when Issuing is present ──────────────────────── #}
+    {% if config.is_issuing %}
+    <a href="{% url 'trust:chain_pem' %}"
+       class="block border border-base-300 rounded-lg p-4 hover:border-primary hover:bg-base-200 transition-colors">
+        <div class="flex items-start gap-4">
+            <div class="text-primary mt-0.5 shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="5" width="18" height="14" rx="2"/>
+                    <path d="M3 9h18M7 13h6M7 16h4"/>
+                </svg>
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="font-semibold">Full certificate chain</span>
+                    <span class="badge badge-sm">For servers</span>
+                </div>
+                <p class="text-sm opacity-70 mt-1">Root + Intermediate + Issuer concatenated. Serve this alongside your leaf cert on TLS servers — nginx, Apache, Traefik, Caddy, cert-manager — so clients can verify the chain end-to-end.</p>
+            </div>
+            <div class="shrink-0 text-right">
+                <div class="font-mono text-xs opacity-70">chain.pem</div>
+            </div>
+        </div>
+    </a>
+    {% endif %}
+</div>
+
+{# ── Advanced: individual certs + curl automation ──────────────────── #}
+<div class="mt-4 space-y-2">
+    <div class="collapse collapse-arrow bg-base-200">
+        <input type="checkbox">
+        <div class="collapse-title text-sm font-medium">Individual CA certificates (advanced)</div>
+        <div class="collapse-content">
+            <p class="text-xs opacity-70 mb-2">Rarely needed separately. Each CA above is also available as its own single-cert file — useful for cert-inspection tooling or building custom trust stores.</p>
+            <div class="flex flex-wrap gap-2">
+                {% if config.root_cert_path %}
+                    <a href="{% url 'trust:root_crt' %}" class="btn btn-sm btn-ghost font-mono">root_ca.crt</a>
+                {% endif %}
+                {% if config.intermediate_cert_path %}
+                    <a href="{% url 'trust:intermediate_crt' %}" class="btn btn-sm btn-ghost font-mono">intermediate_ca.crt</a>
+                {% endif %}
+                {% if config.issuing_cert_path %}
+                    <a href="{% url 'trust:issuer_crt' %}" class="btn btn-sm btn-ghost font-mono">issuer_ca.crt</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="collapse collapse-arrow bg-base-200">
+        <input type="checkbox">
+        <div class="collapse-title text-sm font-medium">Automate with curl / Ansible / CI</div>
+        <div class="collapse-content">
+            <p class="text-xs opacity-70 mb-2">The trust endpoints are public by default (you can require auth per node if needed) so scripts and fleet-deployment tools can pull them unattended.</p>
+            <pre class="bg-base-300 p-3 rounded text-xs overflow-x-auto"><code># Fetch the chain (example)
+curl -ko chain.pem https://{{ config.hostname|default:"localhost" }}:8443{% url 'trust:chain_pem' %}
+
+# Fetch just the Root for fleet trust
+curl -ko root_ca.crt https://{{ config.hostname|default:"localhost" }}:8443{% url 'trust:root_crt' %}</code></pre>
+        </div>
+    </div>
+</div>
