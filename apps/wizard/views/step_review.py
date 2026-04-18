@@ -30,10 +30,13 @@ class StepReviewView(LoginRequiredMixin, View):
         try:
             keygen.generate_chain(config)
             renderer.write(config)
-            keygen.generate_webui_cert(config)
         except keygen.KeygenError as e:
             messages.error(request, f"Key generation failed: {e}")
             return redirect("wizard:step_review")
+        # The Web UI leaf cert is issued later via the dashboard "Sign Web UI
+        # with ForgedCA" action — swapping nginx's cert here would lock the
+        # admin out of their own browser session before they've had a chance
+        # to install the Root in their trust store.
 
         config.is_configured = True
         config.configured_at = timezone.now()

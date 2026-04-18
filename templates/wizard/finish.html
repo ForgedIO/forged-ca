@@ -4,30 +4,25 @@
 {% block content %}
 <div class="max-w-3xl mx-auto space-y-5">
     <div class="alert alert-success">
-        <span><strong>PKI bootstrapped.</strong> Your certificates are ready to download and deploy.</span>
+        <span><strong>CA chain ready.</strong> Your {{ config.roles_selected|join:" + " }} certificates are created and the trust-download endpoints are live.</span>
     </div>
 
     <div class="card bg-base-100 shadow border-l-4 border-accent">
         <div class="card-body">
-            <h2 class="card-title">Your admin UI is now signed by ForgedCA</h2>
+            <h2 class="card-title">Next: get this admin UI on a CA-signed certificate</h2>
             <p class="text-sm opacity-80 mt-0">
-                nginx has been reloaded with a certificate issued by {% if config.is_issuing %}the <strong>Issuing CA</strong>{% elif config.is_intermediate %}the <strong>Intermediate CA</strong>{% else %}the <strong>Root CA</strong>{% endif %} you just created. Valid for <strong>{{ config.webui_lifetime_days }} days</strong> covering the SANs you listed on step 2.
+                Right now nginx is still using the temporary self-signed cert from install. Walk through the three steps below to replace it with a cert issued by your new CA. <strong>Do these in order</strong> &mdash; swapping the cert before your device trusts the new Root will lock your browser out of this page.
             </p>
-            <div class="alert alert-warning mt-3 py-2 text-sm">
-                <span>
-                    <strong>Why your browser still shows a warning:</strong> the new cert is signed by <em>your</em> new Root CA, which no device trusts yet. Download the Root below and install it on your machine, then <strong>reload this page</strong> &mdash; you'll see a trusted lock. After that, every device in your fleet needs the Root installed to trust this admin UI and any other leaf cert issued here.
-                </span>
-            </div>
         </div>
     </div>
 
     <div class="card bg-base-100 shadow">
         <div class="card-body">
-            <h2 class="card-title">Download your trust material</h2>
-            <p class="text-sm opacity-70 mt-0">
-                Pick the file that matches your target. Every download below is a standard X.509 certificate file &mdash; no special tooling required to install it. These same downloads are always available on the <a href="{% url 'core:home' %}" class="link">dashboard</a>, so you don't need to save them now if you'd rather come back later.
-            </p>
-
+            <div class="flex items-center gap-3 mb-1">
+                <div class="rounded-full bg-primary text-primary-content w-8 h-8 flex items-center justify-center font-bold">1</div>
+                <h2 class="card-title">Download the Root CA</h2>
+            </div>
+            <p class="text-sm opacity-70 mt-0">This is the trust anchor &mdash; the single file every device in your fleet installs so it trusts everything your CA issues.</p>
             <div class="mt-4">
                 {% include "partials/trust_downloads.html" %}
             </div>
@@ -36,18 +31,48 @@
 
     <div class="card bg-base-100 shadow">
         <div class="card-body">
-            <h2 class="card-title">What was written to disk</h2>
-            <p class="text-sm opacity-70 mt-0">For reference &mdash; you rarely need to touch these directly. The downloads above serve them on demand.</p>
-            <ul class="list-disc pl-6 space-y-1 text-sm mt-2">
+            <div class="flex items-center gap-3 mb-1">
+                <div class="rounded-full bg-primary text-primary-content w-8 h-8 flex items-center justify-center font-bold">2</div>
+                <h2 class="card-title">Install the Root on this device</h2>
+            </div>
+            <p class="text-sm opacity-70 mt-0">Pick the instructions for whichever OS + browser you're on right now. After this, your browser trusts anything signed by your new CA &mdash; including the cert we'll swap in on step 3.</p>
+
+            <div class="mt-4">
+                {% include "partials/trust_install_instructions.html" %}
+            </div>
+        </div>
+    </div>
+
+    <div class="card bg-base-100 shadow border-l-4 border-warning">
+        <div class="card-body">
+            <div class="flex items-center gap-3 mb-1">
+                <div class="rounded-full bg-primary text-primary-content w-8 h-8 flex items-center justify-center font-bold">3</div>
+                <h2 class="card-title">Sign this admin UI with your new CA</h2>
+            </div>
+            <p class="text-sm opacity-80 mt-0">
+                Once step 2 is done <strong>on this device</strong>, head to the dashboard and click <strong>Sign Web UI with ForgedCA</strong>. nginx reloads with a freshly-issued cert and &mdash; because you've installed the Root &mdash; your browser shows a trusted lock.
+            </p>
+            <div class="alert alert-warning mt-3 text-sm">
+                <span>
+                    <strong>Don't click "Sign Web UI" before finishing step 2.</strong> If you do, your browser will immediately block this page as signed by an unknown CA and you'll have no way back in until you install the Root from a different device (or SSH in and restore the self-signed cert by hand).
+                </span>
+            </div>
+            <div class="card-actions justify-end mt-3">
+                <a href="{% url 'core:home' %}" class="btn btn-primary">Go to dashboard</a>
+            </div>
+        </div>
+    </div>
+
+    <details class="card bg-base-100 shadow">
+        <summary class="card-body cursor-pointer list-none font-semibold">What was written to disk (reference)</summary>
+        <div class="px-8 pb-4 pt-0 text-sm">
+            <ul class="list-disc pl-4 space-y-1">
                 {% if config.root_cert_path %}<li><code class="font-mono text-xs">{{ config.root_cert_path }}</code></li>{% endif %}
                 {% if config.intermediate_cert_path %}<li><code class="font-mono text-xs">{{ config.intermediate_cert_path }}</code></li>{% endif %}
                 {% if config.issuing_cert_path %}<li><code class="font-mono text-xs">{{ config.issuing_cert_path }}</code></li>{% endif %}
             </ul>
+            <p class="mt-2 opacity-70">The downloads above serve these on demand &mdash; you rarely need to touch the raw files.</p>
         </div>
-    </div>
-
-    <div class="text-center pt-2">
-        <a href="{% url 'core:home' %}" class="btn btn-primary">Go to dashboard</a>
-    </div>
+    </details>
 </div>
 {% endblock %}
