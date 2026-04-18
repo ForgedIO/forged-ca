@@ -63,14 +63,19 @@ echo "==> Regenerating any model migrations the repo is missing..."
 # migration, or if a migration file drifts from the model, makemigrations
 # fills the gap locally so `migrate` below has something to apply. On a
 # clean repo this is a no-op ("No changes detected").
-sudo -u "${APP_USER}" \
+#
+# Run from ${APP_HOME} — Python otherwise puts cwd on sys.path[0] and
+# can resolve `apps.core` from the source checkout (e.g. /home/cday/forged-ca/)
+# instead of the deployed copy, which causes makemigrations to try to
+# write to a directory the forgedca user can't write to.
+sudo -u "${APP_USER}" bash -c "cd ${APP_HOME} && \
     DJANGO_SETTINGS_MODULE=forgedca.settings.production \
-    "${PYTHON}" "${APP_HOME}/manage.py" makemigrations --noinput
+    ${PYTHON} manage.py makemigrations --noinput"
 
 echo "==> Running database migrations..."
-sudo -u "${APP_USER}" \
+sudo -u "${APP_USER}" bash -c "cd ${APP_HOME} && \
     DJANGO_SETTINGS_MODULE=forgedca.settings.production \
-    "${PYTHON}" "${APP_HOME}/manage.py" migrate --noinput
+    ${PYTHON} manage.py migrate --noinput"
 
 if command -v npm &>/dev/null; then
     echo "==> Installing frontend dependencies..."
@@ -80,9 +85,9 @@ if command -v npm &>/dev/null; then
 fi
 
 echo "==> Collecting static files..."
-sudo -u "${APP_USER}" \
+sudo -u "${APP_USER}" bash -c "cd ${APP_HOME} && \
     DJANGO_SETTINGS_MODULE=forgedca.settings.production \
-    "${PYTHON}" "${APP_HOME}/manage.py" collectstatic --noinput 2>&1 | tail -3
+    ${PYTHON} manage.py collectstatic --noinput" 2>&1 | tail -3
 
 # ---------------------------------------------------------------------------
 # Refresh systemd units if templates changed

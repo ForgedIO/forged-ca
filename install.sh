@@ -402,20 +402,25 @@ systemctl daemon-reload
 # ---------------------------------------------------------------------------
 # Migrations + static
 # ---------------------------------------------------------------------------
+# All manage.py invocations below run with cwd=${APP_HOME}. Python's
+# sys.path[0] gets set to cwd on `manage.py shell -c` / makemigrations, which
+# means `apps.core` etc. would otherwise resolve from wherever the admin
+# happened to be when they invoked install.sh — including a source checkout
+# the forgedca user can't write to.
 echo "==> Regenerating any model migrations the repo is missing..."
-sudo -u "${APP_USER}" \
+sudo -u "${APP_USER}" bash -c "cd ${APP_HOME} && \
     DJANGO_SETTINGS_MODULE=forgedca.settings.production \
-    "${PYTHON}" "${APP_HOME}/manage.py" makemigrations --noinput 2>&1 | tail -10 || true
+    ${PYTHON} manage.py makemigrations --noinput" 2>&1 | tail -10 || true
 
 echo "==> Running database migrations..."
-sudo -u "${APP_USER}" \
+sudo -u "${APP_USER}" bash -c "cd ${APP_HOME} && \
     DJANGO_SETTINGS_MODULE=forgedca.settings.production \
-    "${PYTHON}" "${APP_HOME}/manage.py" migrate --noinput 2>&1 | tail -5 || true
+    ${PYTHON} manage.py migrate --noinput" 2>&1 | tail -5 || true
 
 echo "==> Collecting static files..."
-sudo -u "${APP_USER}" \
+sudo -u "${APP_USER}" bash -c "cd ${APP_HOME} && \
     DJANGO_SETTINGS_MODULE=forgedca.settings.production \
-    "${PYTHON}" "${APP_HOME}/manage.py" collectstatic --noinput 2>&1 | tail -3 || true
+    ${PYTHON} manage.py collectstatic --noinput" 2>&1 | tail -3 || true
 
 # ---------------------------------------------------------------------------
 # Admin account — will prompt the user to set password on first login
@@ -449,6 +454,7 @@ fi
 # and re-runnable — if the admin exists, the password is reset. Also sets
 # must_change_password=True whenever the default password is in use, so
 # the first login march is: change password → enrol MFA → install wizard.
+cd "${APP_HOME}"
 sudo -u "${APP_USER}" \
     FORGEDCA_BOOTSTRAP_ADMIN_USER="${ADMIN_USER}" \
     FORGEDCA_BOOTSTRAP_ADMIN_PASS="${ADMIN_PASS}" \
