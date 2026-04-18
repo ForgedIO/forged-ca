@@ -30,9 +30,9 @@
 }
 
 @layer components {
-    /* Semantic icon-size classes. Prefer these over raw w-*/h-* utilities in
-       templates so size changes stay centralised and survive a missing Tailwind
-       scan for the file they're used in. */
+    /* Semantic icon-size classes. Prefer these over raw width/height utilities
+       in templates so size changes stay centralised and survive a missing
+       Tailwind scan for the file they're used in. */
     .icon-xs { width: 0.75rem; height: 0.75rem; }
     .icon-sm { width: 1rem;    height: 1rem;    }
     .icon    { width: 1.25rem; height: 1.25rem; }
