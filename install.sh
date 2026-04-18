@@ -439,19 +439,30 @@ else
     fi
 fi
 
+# Idempotent superuser create/update via manage.py shell. More reliable
+# than createsuperuser --noinput (which trips on empty REQUIRED_FIELDS)
+# and re-runnable — if the admin exists, the password is reset.
 sudo -u "${APP_USER}" \
-    DJANGO_SUPERUSER_USERNAME="${ADMIN_USER}" \
-    DJANGO_SUPERUSER_PASSWORD="${ADMIN_PASS}" \
-    DJANGO_SUPERUSER_EMAIL="" \
+    FORGEDCA_BOOTSTRAP_ADMIN_USER="${ADMIN_USER}" \
+    FORGEDCA_BOOTSTRAP_ADMIN_PASS="${ADMIN_PASS}" \
     DJANGO_SETTINGS_MODULE=forgedca.settings.production \
-    "${PYTHON}" "${APP_HOME}/manage.py" createsuperuser --noinput 2>/dev/null || \
-    echo "    (Superuser '${ADMIN_USER}' may already exist — skipping.)"
-
-if [[ "${FORCE_CHANGE}" == "true" ]]; then
-    sudo -u "${APP_USER}" \
-        DJANGO_SETTINGS_MODULE=forgedca.settings.production \
-        "${PYTHON}" "${APP_HOME}/manage.py" set_must_change_password "${ADMIN_USER}" 2>/dev/null || true
-fi
+    "${PYTHON}" "${APP_HOME}/manage.py" shell -c "
+import os
+from django.contrib.auth import get_user_model
+User = get_user_model()
+username = os.environ['FORGEDCA_BOOTSTRAP_ADMIN_USER']
+password = os.environ['FORGEDCA_BOOTSTRAP_ADMIN_PASS']
+u, created = User.objects.get_or_create(
+    username=username,
+    defaults={'email': username + '@localhost', 'is_staff': True, 'is_superuser': True},
+)
+u.set_password(password)
+u.is_staff = True
+u.is_superuser = True
+u.is_active = True
+u.save()
+print('    Superuser {} ({}).'.format(username, 'created' if created else 'password updated'))
+"
 
 # ---------------------------------------------------------------------------
 # Enable + start services
