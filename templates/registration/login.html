@@ -5,14 +5,14 @@
 {% block content %}
 <div class="max-w-md mx-auto">
     <div class="card bg-neutral text-neutral-content shadow-xl overflow-hidden">
-        <div class="card-body items-center text-center pt-10 pb-6 px-8">
-            <img src="{% static 'img/forgedca-keyhole-dark.svg' %}" alt="" class="w-28 h-28">
-            <h1 class="mt-4 text-2xl font-bold tracking-tight">Forged<span class="text-primary">CA</span></h1>
-            <div class="font-mono text-[10px] tracking-[0.25em] text-neutral-content/60 mt-1">SIGN IN TO CONTINUE</div>
+        <div class="card-body items-center text-center pt-5 pb-3 px-8">
+            <img src="{% static 'img/forgedca-keyhole-dark.svg' %}" alt="" class="w-16 h-16">
+            <h1 class="mt-2 text-xl font-bold tracking-tight">Forged<span class="text-primary">CA</span></h1>
+            <div class="font-mono text-[10px] tracking-[0.25em] text-neutral-content/60 mt-0.5">SIGN IN TO CONTINUE</div>
         </div>
 
-        <div class="bg-base-100 text-base-content px-8 py-6">
-            <form method="post" class="space-y-4">
+        <div class="bg-base-100 text-base-content px-8 py-5">
+            <form method="post" class="space-y-3">
                 {% csrf_token %}
                 {% if error %}
                     <div class="alert alert-error">{{ error }}</div>
