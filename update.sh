@@ -77,12 +77,25 @@ sudo -u "${APP_USER}" bash -c "cd ${APP_HOME} && \
     DJANGO_SETTINGS_MODULE=forgedca.settings.production \
     ${PYTHON} manage.py migrate --noinput"
 
-if command -v npm &>/dev/null; then
-    echo "==> Installing frontend dependencies..."
-    sudo -u "${APP_USER}" bash -c "cd ${APP_HOME} && npm install 2>&1 | tail -1" || true
-    echo "==> Building Tailwind CSS..."
-    sudo -u "${APP_USER}" bash -c "cd ${APP_HOME} && npm run build:css 2>&1 | tail -1" || true
+if ! command -v npm &>/dev/null; then
+    echo "    ERROR: npm not found on PATH." >&2
+    exit 1
 fi
+echo "==> Installing frontend dependencies..."
+if ! sudo -u "${APP_USER}" bash -c "cd ${APP_HOME} && npm install"; then
+    echo "    ERROR: npm install failed. Fix the errors above and re-run update.sh." >&2
+    exit 1
+fi
+echo "==> Building Tailwind CSS..."
+if ! sudo -u "${APP_USER}" bash -c "cd ${APP_HOME} && npm run build:css"; then
+    echo "    ERROR: npm run build:css failed. The UI would render unstyled." >&2
+    exit 1
+fi
+if [[ ! -s "${APP_HOME}/static/css/app.css" ]]; then
+    echo "    ERROR: ${APP_HOME}/static/css/app.css is missing or empty after build." >&2
+    exit 1
+fi
+echo "    Tailwind CSS built: $(wc -c < "${APP_HOME}/static/css/app.css") bytes"
 
 echo "==> Collecting static files..."
 sudo -u "${APP_USER}" bash -c "cd ${APP_HOME} && \

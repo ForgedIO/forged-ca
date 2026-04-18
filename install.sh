@@ -276,13 +276,24 @@ echo "==> Installing Python dependencies..."
 sudo -u "${APP_USER}" "${PIP}" install --upgrade pip
 sudo -u "${APP_USER}" "${PIP}" install -r "${APP_HOME}/requirements.txt"
 
-echo "==> Installing frontend dependencies..."
-if command -v npm &>/dev/null; then
-    sudo -u "${APP_USER}" bash -c "cd ${APP_HOME} && npm install 2>&1 | tail -1" || true
-    sudo -u "${APP_USER}" bash -c "cd ${APP_HOME} && npm run build:css 2>&1 | tail -1" || true
-else
-    echo "    WARN: npm not found — Tailwind CSS will not be built"
+echo "==> Installing frontend dependencies + building Tailwind CSS..."
+if ! command -v npm &>/dev/null; then
+    echo "    ERROR: npm not found on PATH — Tailwind CSS can't be built, UI would render unstyled." >&2
+    exit 1
 fi
+if ! sudo -u "${APP_USER}" bash -c "cd ${APP_HOME} && npm install"; then
+    echo "    ERROR: npm install failed. Fix the errors above and re-run install.sh." >&2
+    exit 1
+fi
+if ! sudo -u "${APP_USER}" bash -c "cd ${APP_HOME} && npm run build:css"; then
+    echo "    ERROR: npm run build:css failed. The UI would render unstyled." >&2
+    exit 1
+fi
+if [[ ! -s "${APP_HOME}/static/css/app.css" ]]; then
+    echo "    ERROR: ${APP_HOME}/static/css/app.css is missing or empty after build." >&2
+    exit 1
+fi
+echo "    Tailwind CSS built: $(wc -c < "${APP_HOME}/static/css/app.css") bytes"
 
 # ---------------------------------------------------------------------------
 # Directories + self-signed TLS cert
