@@ -58,6 +58,15 @@ chown -R "${APP_USER}:${APP_USER}" "${VENV}"
 echo "==> Installing Python dependencies..."
 sudo -u "${APP_USER}" "${PIP}" install -q -r "${APP_HOME}/requirements.txt"
 
+echo "==> Regenerating any model migrations the repo is missing..."
+# Defensive: if the developer changed a model but forgot to ship the
+# migration, or if a migration file drifts from the model, makemigrations
+# fills the gap locally so `migrate` below has something to apply. On a
+# clean repo this is a no-op ("No changes detected").
+sudo -u "${APP_USER}" \
+    DJANGO_SETTINGS_MODULE=forgedca.settings.production \
+    "${PYTHON}" "${APP_HOME}/manage.py" makemigrations --noinput
+
 echo "==> Running database migrations..."
 sudo -u "${APP_USER}" \
     DJANGO_SETTINGS_MODULE=forgedca.settings.production \
