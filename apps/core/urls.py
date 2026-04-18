@@ -1,15 +1,25 @@
 from django.urls import path
 
-from . import views
+from .views import (
+    ChangePasswordView,
+    HomeView,
+    LoginView,
+    LogoutView,
+    MfaSetupView,
+    MfaSetupConfirmView,
+    MfaVerifyView,
+)
+
 
 app_name = "core"
 
+
 urlpatterns = [
-    path("", views.home, name="home"),
-    path("login/", views.login_view, name="login"),
-    path("logout/", views.logout_view, name="logout"),
-    path("change-password/", views.change_password, name="change_password"),
-    path("mfa/setup/", views.mfa_setup, name="mfa_setup"),
-    path("mfa/setup/confirm/", views.mfa_setup_confirm, name="mfa_setup_confirm"),
-    path("mfa/verify/", views.mfa_verify, name="mfa_verify"),
+    path("", HomeView.as_view(), name="home"),
+    path("login/", LoginView.as_view(), name="login"),
+    path("logout/", LogoutView.as_view(), name="logout"),
+    path("change-password/", ChangePasswordView.as_view(), name="change_password"),
+    path("mfa/setup/", MfaSetupView.as_view(), name="mfa_setup"),
+    path("mfa/setup/confirm/", MfaSetupConfirmView.as_view(), name="mfa_setup_confirm"),
+    path("mfa/verify/", MfaVerifyView.as_view(), name="mfa_verify"),
 ]

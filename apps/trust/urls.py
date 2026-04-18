@@ -1,13 +1,21 @@
 from django.urls import path
 
-from . import views
+from .views import (
+    BundleCrtView,
+    ChainPemView,
+    IntermediateCrtView,
+    IssuerCrtView,
+    RootCrtView,
+)
+
 
 app_name = "trust"
 
+
 urlpatterns = [
-    path("root.crt", views.root_crt, name="root_crt"),
-    path("intermediate.crt", views.intermediate_crt, name="intermediate_crt"),
-    path("issuer.crt", views.issuer_crt, name="issuer_crt"),
-    path("chain.pem", views.chain_pem, name="chain_pem"),
-    path("bundle.crt", views.bundle_crt, name="bundle_crt"),
+    path("root.crt", RootCrtView.as_view(), name="root_crt"),
+    path("intermediate.crt", IntermediateCrtView.as_view(), name="intermediate_crt"),
+    path("issuer.crt", IssuerCrtView.as_view(), name="issuer_crt"),
+    path("chain.pem", ChainPemView.as_view(), name="chain_pem"),
+    path("bundle.crt", BundleCrtView.as_view(), name="bundle_crt"),
 ]
