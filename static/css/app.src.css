@@ -19,6 +19,14 @@
         width: 1.5rem;
         height: 1.5rem;
     }
+
+    /* Images (including SVGs used as <img> src) must never overflow their
+       container. Defends against a stale Tailwind build where w-* classes
+       didn't make it into app.css. */
+    img {
+        max-width: 100%;
+        height: auto;
+    }
 }
 
 @layer components {
