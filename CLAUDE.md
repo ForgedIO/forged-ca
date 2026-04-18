@@ -42,6 +42,20 @@ A dramatically simpler alternative to Microsoft ADCS for on-prem private PKI. Th
 - **Repo, directory, package, binary:** `forged-ca` (kebab-case).
 - **GitHub org:** `ForgedIO` (note the "d" — *Forged*, not *Forge*).
 
+## Styling — Tailwind + DaisyUI, CSS-first for fixes
+
+The UI layer uses **Tailwind CSS + DaisyUI**, compiled by `npm run build:css` into `static/css/app.css`. When the layout or an element is rendering wrong (sizing, spacing, colour, etc.), **fix it in the stylesheet (`static/css/app.src.css`), not by piling more utility classes onto every template**. Patching templates repeatedly is fragile and doesn't survive Tailwind scan hiccups or a forgotten rebuild.
+
+Rules:
+
+- **Global element fixes** — use `@layer base` for defaults that apply to every instance (e.g. default `svg` size so unsized icons don't fall back to the browser's 300×150).
+- **Reusable component classes** — use `@layer components` (e.g. `.icon-sm`, `.icon-md` for named icon sizes, `.btn-download` for a repeated pattern). Compose with `@apply` if useful.
+- **DaisyUI overrides** — target DaisyUI's generated classes inside `@layer components` when a DaisyUI default doesn't match the design; don't try to out-specificity-war it from templates.
+- **Tailwind utilities still welcome for one-offs** — the goal isn't to abandon utility classes; it's to stop fighting them when a pattern repeats or a base element needs sane defaults.
+- **Always rebuild CSS when a pattern changes** — `update.sh` runs `npm run build:css`, but during iterative dev a stale `static/css/app.css` can make "my class isn't working" look like a template bug when it's really a build bug. Prefer CSS-layer changes over template changes because they produce the same CSS whether the build scanned every template or not.
+
+Apply this every time. Tailwind class churn in templates is a sign the fix belongs in CSS.
+
 ## Repo layout
 
 Early stage — only `README.md`, `.gitignore`, and this file exist. Expected top-level layout once scaffolded (subject to change when stack is picked):
