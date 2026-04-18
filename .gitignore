@@ -1,0 +1,52 @@
+# Secrets & credentials
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+*.env
+.env.*
+!.env.example
+secrets/
+credentials/
+
+# step-ca state
+.step/
+step-ca-data/
+
+# Build artifacts
+dist/
+build/
+out/
+target/
+*.o
+*.so
+*.exe
+
+# Dependencies
+node_modules/
+vendor/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Local config overrides
+config.local.*
+*.local
