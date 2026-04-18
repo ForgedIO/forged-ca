@@ -15,10 +15,6 @@
 <div class="navbar bg-neutral text-neutral-content shadow-sm px-4">
     <div class="container mx-auto">
         <div class="flex-1">
-            {# Mark + wordmark + tagline rendered as HTML rather than the single
-               wordmark SVG — at navbar height the SVG's baked-in tagline renders
-               at ~3px and is illegible. Splitting them out lets the tagline sit
-               at its own legible size while keeping the designer's lockup intact. #}
             <a href="{% url 'core:home' %}" class="flex items-center gap-3" aria-label="ForgedCA home">
                 <img src="{% static 'img/forgedca-keyhole.svg' %}" alt="" class="w-10 h-10 shrink-0">
                 <span class="flex flex-col leading-tight">
