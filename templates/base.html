@@ -5,13 +5,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}ForgedCA{% endblock %}</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'img/forgedca-keyhole-favicon-32.svg' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/forgedca-keyhole-favicon-32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'img/forgedca-keyhole-favicon-16.png' %}">
+    <link rel="shortcut icon" href="{% static 'img/forgedca-keyhole.ico' %}">
     <link rel="stylesheet" href="{% static 'css/app.css' %}">
 </head>
 <body class="min-h-screen bg-base-200">
-<div class="navbar bg-base-100 shadow-sm">
+<div class="navbar bg-neutral text-neutral-content shadow-sm px-4">
     <div class="container mx-auto">
         <div class="flex-1">
-            <a href="{% url 'core:home' %}" class="btn btn-ghost text-xl normal-case">ForgedCA</a>
+            <a href="{% url 'core:home' %}" class="inline-block" aria-label="ForgedCA home">
+                <img src="{% static 'img/forgedca-keyhole-wordmark-dark.svg' %}" alt="ForgedCA" class="h-9 w-auto">
+            </a>
         </div>
         <div class="flex-none">
             {% if user.is_authenticated %}

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 240" id="forgedca-wordmark-dark">
+  <rect width="960" height="240" fill="#1B1F26"></rect>
+  
+  <g transform="translate(20, 0)">
+    <circle cx="120" cy="120" r="100" fill="none" stroke="#6B89B8" stroke-width="5"></circle>
+    <circle cx="120" cy="120" r="84" fill="none" stroke="#6B89B8" stroke-width="1.5" opacity="0.35"></circle>
+    <g fill="#6B89B8">
+      <circle cx="120" cy="100" r="22"></circle>
+      <path d="M 108 116 L 132 116 L 138 172 L 102 172 Z"></path>
+    </g>
+    <g stroke="#6B89B8" stroke-width="3">
+      <line x1="44" y1="120" x2="58" y2="120"></line>
+      <line x1="182" y1="120" x2="196" y2="120"></line>
+    </g>
+    <circle cx="120" cy="36" r="4" fill="#E08B3B"></circle>
+  </g>
+  
+  <g id="forgedca-wordmark-type" font-family="&#39;Zilla Slab&#39;, &#39;Roboto Slab&#39;, Georgia, serif" font-weight="700">
+    <text x="280" y="140" font-size="100" fill="#E9ECF1" letter-spacing="-2">Forged<tspan fill="#6B89B8">CA</tspan></text>
+    <text x="282" y="176" font-family="&#39;JetBrains Mono&#39;, &#39;Menlo&#39;, monospace" font-weight="500" font-size="18" fill="#E9ECF1" opacity="0.55" letter-spacing="6">PKI · ACME · STEP-CA</text>
+  </g>
+</svg>

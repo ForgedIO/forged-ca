@@ -1,12 +1,18 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Sign in &mdash; ForgedCA{% endblock %}
 
 {% block content %}
 <div class="max-w-md mx-auto">
-    <div class="card bg-base-100 shadow">
-        <div class="card-body">
-            <h2 class="card-title">Sign in</h2>
-            <form method="post">
+    <div class="card bg-neutral text-neutral-content shadow-xl overflow-hidden">
+        <div class="card-body items-center text-center pt-10 pb-6 px-8">
+            <img src="{% static 'img/forgedca-keyhole-dark.svg' %}" alt="" class="w-28 h-28">
+            <h1 class="mt-4 text-2xl font-bold tracking-tight">Forged<span class="text-primary">CA</span></h1>
+            <div class="font-mono text-[10px] tracking-[0.25em] text-neutral-content/60 mt-1">SIGN IN TO CONTINUE</div>
+        </div>
+
+        <div class="bg-base-100 text-base-content px-8 py-6">
+            <form method="post" class="space-y-4">
                 {% csrf_token %}
                 {% if error %}
                     <div class="alert alert-error">{{ error }}</div>
@@ -14,17 +20,18 @@
                 {% if form.non_field_errors %}
                     <div class="alert alert-error">{{ form.non_field_errors }}</div>
                 {% endif %}
+
                 <label class="form-control w-full">
-                    <div class="label"><span class="label-text">Username</span></div>
+                    <div class="label py-1"><span class="label-text">Username</span></div>
                     <input type="text" name="username" class="input input-bordered w-full" autofocus required>
                 </label>
+
                 <label class="form-control w-full">
-                    <div class="label"><span class="label-text">Password</span></div>
+                    <div class="label py-1"><span class="label-text">Password</span></div>
                     <input type="password" name="password" class="input input-bordered w-full" required>
                 </label>
-                <div class="card-actions mt-4 justify-end">
-                    <button type="submit" class="btn btn-primary">Sign in</button>
-                </div>
+
+                <button type="submit" class="btn btn-primary w-full">Sign in</button>
             </form>
         </div>
     </div>

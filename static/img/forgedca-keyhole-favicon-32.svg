@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" id="forgedca-keyhole-favicon-32">
+  <rect width="32" height="32" fill="#1B1F26"></rect>
+  <circle cx="16" cy="16" r="13" fill="none" stroke="#6B89B8" stroke-width="1.8"></circle>
+  <g fill="#6B89B8">
+    <circle cx="16" cy="13.5" r="3"></circle>
+    <path d="M 14 15.5 L 18 15.5 L 19 23 L 13 23 Z"></path>
+  </g>
+  <circle cx="16" cy="6" r="1.5" fill="#E08B3B"></circle>
+</svg>
