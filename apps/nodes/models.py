@@ -40,6 +40,14 @@ class NodeConfig(models.Model):
     trust_download_requires_auth = models.BooleanField(default=False)
     default_acme_provisioner = models.CharField(max_length=100, default="forgedca-acme")
 
+    # Admin Web UI certificate — issued by this node's own CA chain during
+    # the wizard so nginx stops serving the install-time self-signed snake-
+    # oil cert. SANs are one entry per line, mixed DNS names and IPs.
+    webui_sans = models.TextField(blank=True, default="")
+    webui_lifetime_days = models.PositiveIntegerField(default=365)
+    webui_cert_path = models.CharField(max_length=500, blank=True)
+    webui_key_path = models.CharField(max_length=500, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     configured_at = models.DateTimeField(null=True, blank=True)
 

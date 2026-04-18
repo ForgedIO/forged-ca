@@ -37,6 +37,14 @@
                     <td><code class="font-mono text-xs">CN={{ config.issuing_cn }}</code> &middot; {{ config.issuing_lifetime_days }} days &middot; signed by {% if config.is_intermediate %}Intermediate{% else %}Root{% endif %}</td>
                 </tr>
             {% endif %}
+            <tr class="border-t-2 border-base-300">
+                <th>Web UI certificate</th>
+                <td>
+                    <div class="text-xs opacity-70 mb-1">Signed by {% if config.is_issuing %}Issuing{% elif config.is_intermediate %}Intermediate{% else %}Root{% endif %} &middot; {{ config.webui_lifetime_days }} days &middot; replaces the install-time self-signed cert on nginx.</div>
+                    <div class="text-xs opacity-60">SANs:</div>
+                    <pre class="font-mono text-xs bg-base-200 rounded px-2 py-1 mt-1 whitespace-pre-wrap">{{ config.webui_sans }}</pre>
+                </td>
+            </tr>
         </tbody>
     </table>
 </div>

@@ -30,6 +30,7 @@ class StepReviewView(LoginRequiredMixin, View):
         try:
             keygen.generate_chain(config)
             renderer.write(config)
+            keygen.generate_webui_cert(config)
         except keygen.KeygenError as e:
             messages.error(request, f"Key generation failed: {e}")
             return redirect("wizard:step_review")

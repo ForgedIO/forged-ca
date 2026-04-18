@@ -7,6 +7,20 @@
         <span><strong>PKI bootstrapped.</strong> Your certificates are ready to download and deploy.</span>
     </div>
 
+    <div class="card bg-base-100 shadow border-l-4 border-accent">
+        <div class="card-body">
+            <h2 class="card-title">Your admin UI is now signed by ForgedCA</h2>
+            <p class="text-sm opacity-80 mt-0">
+                nginx has been reloaded with a certificate issued by {% if config.is_issuing %}the <strong>Issuing CA</strong>{% elif config.is_intermediate %}the <strong>Intermediate CA</strong>{% else %}the <strong>Root CA</strong>{% endif %} you just created. Valid for <strong>{{ config.webui_lifetime_days }} days</strong> covering the SANs you listed on step 2.
+            </p>
+            <div class="alert alert-warning mt-3 py-2 text-sm">
+                <span>
+                    <strong>Why your browser still shows a warning:</strong> the new cert is signed by <em>your</em> new Root CA, which no device trusts yet. Download the Root below and install it on your machine, then <strong>reload this page</strong> &mdash; you'll see a trusted lock. After that, every device in your fleet needs the Root installed to trust this admin UI and any other leaf cert issued here.
+                </span>
+            </div>
+        </div>
+    </div>
+
     <div class="card bg-base-100 shadow">
         <div class="card-body">
             <h2 class="card-title">Download your trust material</h2>

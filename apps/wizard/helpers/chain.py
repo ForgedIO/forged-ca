@@ -20,3 +20,7 @@ def apply_lifetimes(config: NodeConfig, cleaned: dict) -> None:
     if config.is_issuing:
         config.issuing_cn = cleaned.get("issuing_cn") or config.issuing_cn
         config.issuing_lifetime_days = cleaned["issuing_lifetime_days"]
+    if "webui_sans" in cleaned:
+        config.webui_sans = cleaned["webui_sans"]
+    if "webui_lifetime_days" in cleaned:
+        config.webui_lifetime_days = cleaned["webui_lifetime_days"]
