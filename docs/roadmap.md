@@ -1,65 +1,39 @@
 # ForgedCA Roadmap
 
-This document tracks what's in v1 scope, what's explicitly deferred to v2, and rough progress against v1.
+This document tracks **how** ForgedCA is being built, not just **what**. Work is split into thin slices that can be tested end-to-end on a single LXC/VM by a sysadmin pulling from `main`. Federation (multi-node) is the final layer — we prove every feature on a single "all roles" box first.
 
-## v1 scope (the plan we're building to)
+## Development principle: single-server first
 
-### Core PKI
-- [ ] step-ca installation, config rendering, and lifecycle management (`apps/ca/`)
-- [ ] Any-combination role model: Root / Intermediate / Issuing per node
-- [ ] Online multi-tier federation (Root → Intermediate → Issuing)
-- [ ] Offline Root support via USB sneakernet ceremony (Root-only nodes)
-- [ ] ACME provisioners with HTTP-01 validation
-- [ ] ACME DNS-01 validation (as a plugin, at least Cloudflare + Route53)
-- [ ] Non-ACME CSR signing UI with templates and opt-in passthrough
-- [ ] Revocation (passive by default; active CRL/OCSP per-provisioner toggle)
+Every feature in v1 lands in its single-node form (Root + Intermediate + Issuing on one box) **before** we start building the federation protocol. This keeps us from multiplying CA-level bugs across three boxes. Once every user-facing feature works on one node, the federation slices split the roles across multiple nodes.
 
-### Templates
-- [ ] `CertTemplate` model with EKU / KU / validity / name-constraint fields
-- [ ] Create-from-Issuing-pushes-up-to-Intermediate flow
-- [ ] Issuing-CA hourly refresh of templates from parent Intermediate
-- [ ] Intermediate-to-Intermediate peering for cross-scope template sharing
-- [ ] ACME-provisioner binds to a template; default "Web Server (Server + optional Client Auth)"
-- [ ] EKU intersection logic (CSR ∩ template, `serverAuth` forced-always on Web Server)
+## Slice sequence
 
-### Federation
-- [ ] mTLS federation CA bootstrap on online Root
-- [ ] Bootstrap token mint + exchange flow for adding peers
-- [ ] `/fed/v1/` REST endpoints (bootstrap, peers, status, csr, trust-chain, templates, health)
-- [ ] Live-aggregation dashboard (parallel peer `/status` queries, 30s Redis cache)
-- [ ] Per-node trust-chain download — public by default, admin-toggle to require auth
+Each slice is one testable deliverable. Check `docs/CHANGELOG.md` for per-commit detail.
 
-### UX
-- [ ] First-run install wizard (admin + MFA → role → federation → lifetimes → key/CSR → ACME defaults)
-- [ ] Role-gated navigation (offline Root sees ceremony UI only; etc.)
-- [ ] ACME Client Onboarding page per provisioner (directory URL, fingerprint, copy-paste commands for `step`, `certbot`, `acme.sh`, cert-manager, Traefik, Caddy, nginx)
-- [ ] Trust-store distribution helpers (GPO ADMX generator, Intune configuration profile generator)
-- [ ] Help system (markdown per page, loaded via HTMX into a side panel)
-- [ ] Dark mode
+### Foundations (single-server)
+- [x] **Slice 1** — login + wizard + local Root/Intermediate/Issuing chain generation, trust-chain download endpoints
+- [x] **Slice 1.5** — forced password change on first login, TOTP MFA enrollment with recovery codes, then wizard
+- [x] **Architecture refactor** — one view per file, class-based views, helpers/ per app, imports at top
+- [ ] **Slice 2** — step-ca daemon lifecycle (start/stop via systemctl), a default ACME provisioner, ACME Client Onboarding page (copy-paste commands for `step`, `certbot`, `acme.sh`, cert-manager, Traefik, Caddy, nginx), and a real leaf-cert enrollment demo against the local Issuing CA
+- [ ] **Slice 3** — cert templates: CRUD UI, template-per-provisioner binding, default "Web Server (Server + optional Client Auth)" template
+- [ ] **Slice 4** — non-ACME CSR signing UI: admin uploads CSR → picks a compatible template → signs; explicit "passthrough (advanced)" opt-in for bare-CSR signing
+- [ ] **Slice 5** — local dashboard: rollup counts (issued, expiring soon, revoked) and a recent-issuances list with a revoke button
+- [ ] **Slice 6** — revocation UI + per-node append-only audit log
+- [ ] **Slice 7** — email backends: SMTP + Microsoft Graph API; password reset flow; MFA email-recovery bypass
+- [ ] **Slice 8** — syslog forwarder settings (DB-driven destination, severity thresholds)
+- [ ] **Slice 9** — IdPs: LDAP, Entra ID (dedicated UX), generic SAML 2.0, generic OIDC, Duo Universal Prompt as a layered MFA provider
 
-### Identity + Security
-- [ ] Local accounts with forced password change on first login
-- [ ] TOTP MFA mandatory for local/LDAP/SAML/OIDC users
-- [ ] Recovery codes + email-bypass for TOTP
-- [ ] LDAP backend (lifted from proxmigrate)
-- [ ] Entra ID backend (lifted, dedicated config with its nice UX)
-- [ ] Generic SAML 2.0 backend
-- [ ] Generic OIDC backend
-- [ ] Duo Universal Prompt as a layered MFA provider on top of any primary IdP
-- [ ] SMTP email backend
-- [ ] Microsoft Graph API email backend
-- [ ] Syslog forwarding (DB-driven destination config)
-- [ ] Audit log (append-only, per-node)
+### Federation (multi-server, starts at slice 10)
+- [ ] **Slice 10** — federation mTLS CA bootstrap on online Root; bootstrap token mint + exchange flow; join-as-Intermediate wizard that submits a CSR to the Root and imports the signed cert
+- [ ] **Slice 11** — join-as-Issuing under an existing Intermediate; live-aggregation dashboard (each node queries peers on demand for the fleet view)
+- [ ] **Slice 12** — cert-template push-up (create on Issuing, canonical copy lives on Intermediate); pairwise Intermediate ↔ Intermediate peering for cross-scope template sharing
+- [ ] **Slice 13** — offline Root ceremony (Root-only node, air-gapped): CSR-over-USB signing flow with fingerprint confirmation on import
+- [ ] **Slice 14** — trust-store distribution helpers (GPO ADMX generator, Intune configuration profile generator)
+- [ ] **Slice 15** — role-gated navigation polish, help system (markdown per page, HTMX side panel), dark mode sweep, README screenshots
 
-### Distribution
-- [ ] `install.sh` multi-distro (apt / dnf / yum / zypper) with step-ca + Postgres bootstrap
-- [ ] `update.sh` self-pulls and applies the upgrade in one command
-- [ ] `uninstall.sh` with `--keep-data` option
-- [ ] LXC one-liner helper (proxmox-friendly)
-- [ ] `install.sh --port <n>` flag
-- [ ] Air-gap support (pre-seeded `vendor/` dir for pip installs)
+Slice numbers will shift as scope shakes out.
 
-## v2 and beyond (explicitly deferred)
+## v2 and beyond (explicitly deferred out of v1)
 
 - Fleet-sync of IdP / email / syslog configs (v1: per-node, configured independently)
 - Event-log federation + gossip (v1: live queries only, no mirrored state)
@@ -73,11 +47,11 @@ This document tracks what's in v1 scope, what's explicitly deferred to v2, and r
 - Cert lifecycle metrics dashboard (SLOs on issuance latency, renewal failure rate)
 - Public HTTPS hosting support for ACME validation (currently assumes private network)
 
-## Progress log
+## Supported distros (installer matrix)
 
-### 0.1.0-alpha — 2026-04-18
-- Initial repo scaffold: directory layout, Django project, app stubs
-- `install.sh` / `update.sh` / `uninstall.sh` skeletons with multi-distro detection
-- Deploy templates: nginx, gunicorn, celery, step-ca systemd unit, Postgres bootstrap SQL
-- `requirements.txt` + `package.json` with Tailwind + DaisyUI wiring
-- `CLAUDE.md`, plan document, architecture README
+- Ubuntu 22.04 LTS, 24.04 LTS
+- Debian 11, 12
+- RHEL 8, 9; CentOS Stream 9, 10; Rocky 8, 9; AlmaLinux 8, 9
+- openSUSE Leap 15, openSUSE Tumbleweed
+
+Non-v1 packaging targets (Kubernetes / Helm, Docker, JAMF trust-store, etc.) are in the v2 list above.
