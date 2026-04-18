@@ -70,6 +70,18 @@ def _paths() -> dict[str, Path]:
     }
 
 
+# step-cli's stock root-ca / intermediate-ca profiles set pathLenConstraint
+# too tight for a three-tier chain (Root→Intermediate→Issuing→Leaf): the
+# default Root gets pathLen=1 and the default Intermediate gets pathLen=0.
+# Firefox correctly rejects that chain with "Certificate path length
+# constraint is invalid" the moment it sees the Issuing CA beneath an
+# Intermediate whose pathLen is 0. These templates widen the constraints
+# so three tiers validate cleanly.
+_STEP_TEMPLATES_DIR = Path(__file__).parent / "step_templates"
+_ROOT_CA_TEMPLATE = _STEP_TEMPLATES_DIR / "root_ca.tpl"
+_INTERMEDIATE_CA_TEMPLATE = _STEP_TEMPLATES_DIR / "intermediate_ca.tpl"
+
+
 def generate_chain(config) -> list[GeneratedArtifact]:
     """Generate keys and certs for whatever roles are set on `config`.
 
@@ -85,10 +97,11 @@ def generate_chain(config) -> list[GeneratedArtifact]:
     paths = _paths()
     artifacts: list[GeneratedArtifact] = []
 
-    # Root — self-signed
+    # Root — self-signed. Custom template widens pathLenConstraint to 5 so
+    # the chain can accommodate Intermediate + Issuing beneath the Root.
     _run_step([
         "certificate", "create",
-        "--profile", "root-ca",
+        "--template", str(_ROOT_CA_TEMPLATE),
         "--no-password", "--insecure",
         "--not-after", _lifetime_flag(config.root_lifetime_days),
         "--force",
@@ -101,11 +114,12 @@ def generate_chain(config) -> list[GeneratedArtifact]:
     config.root_cert_path = str(paths["root_cert"])
     config.root_key_path = str(paths["root_key"])
 
-    # Intermediate — signed by local Root
+    # Intermediate — signed by local Root. Custom template sets pathLen=1
+    # so the Intermediate is allowed to sign the Issuing CA beneath it.
     if config.is_intermediate:
         _run_step([
             "certificate", "create",
-            "--profile", "intermediate-ca",
+            "--template", str(_INTERMEDIATE_CA_TEMPLATE),
             "--ca", str(paths["root_cert"]),
             "--ca-key", str(paths["root_key"]),
             "--no-password", "--insecure",
