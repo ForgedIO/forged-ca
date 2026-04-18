@@ -8,6 +8,9 @@
             <h2 class="card-title">Sign in</h2>
             <form method="post">
                 {% csrf_token %}
+                {% if error %}
+                    <div class="alert alert-error">{{ error }}</div>
+                {% endif %}
                 {% if form.non_field_errors %}
                     <div class="alert alert-error">{{ form.non_field_errors }}</div>
                 {% endif %}

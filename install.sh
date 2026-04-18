@@ -441,17 +441,22 @@ fi
 
 # Idempotent superuser create/update via manage.py shell. More reliable
 # than createsuperuser --noinput (which trips on empty REQUIRED_FIELDS)
-# and re-runnable — if the admin exists, the password is reset.
+# and re-runnable — if the admin exists, the password is reset. Also sets
+# must_change_password=True whenever the default password is in use, so
+# the first login march is: change password → enrol MFA → install wizard.
 sudo -u "${APP_USER}" \
     FORGEDCA_BOOTSTRAP_ADMIN_USER="${ADMIN_USER}" \
     FORGEDCA_BOOTSTRAP_ADMIN_PASS="${ADMIN_PASS}" \
+    FORGEDCA_BOOTSTRAP_FORCE_CHANGE="${FORCE_CHANGE}" \
     DJANGO_SETTINGS_MODULE=forgedca.settings.production \
     "${PYTHON}" "${APP_HOME}/manage.py" shell -c "
 import os
 from django.contrib.auth import get_user_model
+from apps.core.models import UserProfile, MFAConfig
 User = get_user_model()
 username = os.environ['FORGEDCA_BOOTSTRAP_ADMIN_USER']
 password = os.environ['FORGEDCA_BOOTSTRAP_ADMIN_PASS']
+force_change = os.environ['FORGEDCA_BOOTSTRAP_FORCE_CHANGE'] == 'true'
 u, created = User.objects.get_or_create(
     username=username,
     defaults={'email': username + '@localhost', 'is_staff': True, 'is_superuser': True},
@@ -461,7 +466,12 @@ u.is_staff = True
 u.is_superuser = True
 u.is_active = True
 u.save()
-print('    Superuser {} ({}).'.format(username, 'created' if created else 'password updated'))
+profile, _ = UserProfile.objects.get_or_create(user=u)
+profile.must_change_password = force_change
+profile.save(update_fields=['must_change_password'])
+MFAConfig.load()  # ensures default (enforce_mfa=True) exists
+print('    Superuser {} ({}), must_change_password={}.'.format(
+    username, 'created' if created else 'password reset', force_change))
 "
 
 # ---------------------------------------------------------------------------

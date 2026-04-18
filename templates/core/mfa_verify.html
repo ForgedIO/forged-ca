@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Verify MFA &mdash; ForgedCA{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto">
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h2 class="card-title">Enter your authenticator code</h2>
+            <p class="text-sm opacity-70">Open your authenticator app and enter the current 6-digit code. You can also enter one of your 8-character recovery codes.</p>
+            <form method="post" class="mt-3">
+                {% csrf_token %}
+                {% if error %}
+                    <div class="alert alert-error mb-3"><span>{{ error }}</span></div>
+                {% endif %}
+                <label class="form-control w-full">
+                    <div class="label"><span class="label-text">Code</span></div>
+                    <input type="text" name="code" class="input input-bordered w-full tracking-widest text-center" inputmode="text" autocomplete="one-time-code" required autofocus>
+                </label>
+                <div class="card-actions justify-end mt-4">
+                    <button type="submit" class="btn btn-primary">Verify</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

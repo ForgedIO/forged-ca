@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Recovery codes &mdash; ForgedCA{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto">
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h2 class="card-title">MFA enabled. Save your recovery codes.</h2>
+            <div class="alert alert-warning">
+                <span>These codes are shown <strong>once</strong>. Save them in a password manager \u2014 each one works as a single-use backup when you don't have your authenticator.</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 mt-4 font-mono text-sm">
+                {% for c in codes %}
+                    <div class="p-2 bg-base-200 rounded text-center select-all">{{ c }}</div>
+                {% endfor %}
+            </div>
+
+            <div class="card-actions justify-end mt-6">
+                <a href="{% url 'core:home' %}" class="btn btn-primary">I've saved them &mdash; continue</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

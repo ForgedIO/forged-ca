@@ -1,4 +1,3 @@
-from django.contrib.auth import views as auth_views
 from django.urls import path
 
 from . import views
@@ -7,6 +6,10 @@ app_name = "core"
 
 urlpatterns = [
     path("", views.home, name="home"),
-    path("login/", auth_views.LoginView.as_view(template_name="registration/login.html"), name="login"),
-    path("logout/", auth_views.LogoutView.as_view(next_page="core:login"), name="logout"),
+    path("login/", views.login_view, name="login"),
+    path("logout/", views.logout_view, name="logout"),
+    path("change-password/", views.change_password, name="change_password"),
+    path("mfa/setup/", views.mfa_setup, name="mfa_setup"),
+    path("mfa/setup/confirm/", views.mfa_setup_confirm, name="mfa_setup_confirm"),
+    path("mfa/verify/", views.mfa_verify, name="mfa_verify"),
 ]

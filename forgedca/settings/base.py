@@ -59,6 +59,11 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    # Order matters: force password change first, then MFA setup, then the
+    # install wizard. No middleware below these should run against an admin
+    # who hasn't gone through the pre-wizard hygiene flow.
+    "apps.core.middleware.ForcePasswordChangeMiddleware",
+    "apps.core.middleware.ForceMFASetupMiddleware",
     "apps.wizard.middleware.WizardRedirectMiddleware",
 ]
 
