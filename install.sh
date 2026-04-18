@@ -230,8 +230,8 @@ fi
 chown -R "${APP_USER}:${APP_USER}" "${VENV}"
 
 echo "==> Installing Python dependencies..."
-sudo -u "${APP_USER}" "${PIP}" install --quiet --upgrade pip
-sudo -u "${APP_USER}" "${PIP}" install --quiet -r "${APP_HOME}/requirements.txt" 2>&1 | tail -5 || true
+sudo -u "${APP_USER}" "${PIP}" install --upgrade pip
+sudo -u "${APP_USER}" "${PIP}" install -r "${APP_HOME}/requirements.txt"
 
 echo "==> Installing frontend dependencies..."
 if command -v npm &>/dev/null; then
@@ -273,17 +273,19 @@ STEP_CA_DB_PASSWORD="$(python3 -c 'import secrets; print(secrets.token_urlsafe(3
 # ---------------------------------------------------------------------------
 echo "==> Provisioning Postgres roles and databases..."
 if [[ ! -f "${APP_HOME}/.db-provisioned" ]]; then
-    sed \
-        -e "s|{{ FORGEDCA_DB_PASSWORD }}|${FORGEDCA_DB_PASSWORD}|g" \
-        -e "s|{{ STEP_CA_DB_PASSWORD }}|${STEP_CA_DB_PASSWORD}|g" \
-        "${APP_HOME}/deploy/postgres-init.sql.template" \
-        > /tmp/forgedca-postgres-init.sql
-    chmod 600 /tmp/forgedca-postgres-init.sql
-    su - postgres -c "psql -f /tmp/forgedca-postgres-init.sql" 2>&1 | tail -5 || true
-    rm -f /tmp/forgedca-postgres-init.sql
-    touch "${APP_HOME}/.db-provisioned"
-    chown "${APP_USER}:${APP_USER}" "${APP_HOME}/.db-provisioned"
-    echo "    Databases 'forgedca' and 'step_ca' created."
+    # Pipe SQL via stdin — keeps passwords out of a temp file on disk.
+    if sed \
+            -e "s|{{ FORGEDCA_DB_PASSWORD }}|${FORGEDCA_DB_PASSWORD}|g" \
+            -e "s|{{ STEP_CA_DB_PASSWORD }}|${STEP_CA_DB_PASSWORD}|g" \
+            "${APP_HOME}/deploy/postgres-init.sql.template" \
+        | sudo -u postgres psql -v ON_ERROR_STOP=1 -q; then
+        touch "${APP_HOME}/.db-provisioned"
+        chown "${APP_USER}:${APP_USER}" "${APP_HOME}/.db-provisioned"
+        echo "    Databases 'forgedca' and 'step_ca' created."
+    else
+        echo "ERROR: Postgres provisioning failed." >&2
+        exit 1
+    fi
 else
     echo "    Databases already provisioned — skipping (remove ${APP_HOME}/.db-provisioned to re-run)"
 fi
