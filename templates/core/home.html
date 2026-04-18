@@ -2,65 +2,71 @@
 {% block title %}Dashboard &mdash; ForgedCA{% endblock %}
 
 {% block content %}
-<div class="space-y-6 max-w-5xl mx-auto">
+<div class="space-y-6">
+    <div class="flex items-center justify-between flex-wrap gap-2">
+        <h1 class="text-2xl font-bold">Dashboard</h1>
+        <span class="text-sm opacity-60">{{ config.hostname|default:"localhost" }} &middot; {{ config.roles_selected|join:" + " }}</span>
+    </div>
 
-    {% if config.webui_cert_path %}
-        <div class="card bg-base-100 shadow border-l-4 border-success">
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="card bg-base-100 shadow {% if config.webui_cert_path %}border-l-4 border-success{% else %}border-l-4 border-warning{% endif %}">
             <div class="card-body">
-                <h2 class="card-title">Web UI signed by ForgedCA</h2>
-                <p class="text-sm opacity-70 mt-0">
-                    nginx is serving this admin UI with a cert issued by your
-                    {% if config.is_issuing %}<strong>Issuing CA</strong>{% elif config.is_intermediate %}<strong>Intermediate CA</strong>{% else %}<strong>Root CA</strong>{% endif %}.
-                    Devices that trust the Root see a valid lock on this page.
-                </p>
-                <form method="post" action="{% url 'ca:sign_webui' %}" class="mt-2">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-sm btn-ghost">Rotate &middot; re-issue</button>
-                </form>
+                <h2 class="card-title text-base">Web UI certificate</h2>
+                {% if config.webui_cert_path %}
+                    <p class="text-sm opacity-70 mt-0">Signed by ForgedCA &middot; {{ config.webui_lifetime_days }} days.</p>
+                    <div class="card-actions justify-end mt-2">
+                        <a href="{% url 'core:settings' %}" class="btn btn-sm btn-ghost">Rotate in Settings</a>
+                    </div>
+                {% else %}
+                    <p class="text-sm opacity-70 mt-0">Still on the install-time self-signed cert. Install the Root on your device, then sign.</p>
+                    <div class="card-actions justify-end mt-2">
+                        <a href="{% url 'core:settings' %}" class="btn btn-sm btn-primary">Open Settings</a>
+                    </div>
+                {% endif %}
             </div>
         </div>
-    {% else %}
-        <div class="card bg-base-100 shadow border-l-4 border-warning">
+
+        <div class="card bg-base-100 shadow">
             <div class="card-body">
-                <h2 class="card-title">Web UI is still using a temporary self-signed cert</h2>
-                <p class="text-sm opacity-80 mt-0">
-                    Replace it with a cert signed by your new CA. Two steps, in order &mdash; <strong>do step 1 first</strong>, otherwise clicking step 2 will lock your browser out of this page.
-                </p>
-
-                <div class="mt-4">
-                    <h3 class="font-semibold">Step 1. Install the Root CA on this device</h3>
-                    <p class="text-sm opacity-70 mt-1">Download the Root from the <strong>Trust downloads</strong> card below, then follow the instructions for whichever OS/browser you're on right now.</p>
-                    <div class="mt-3">
-                        {% include "partials/trust_install_instructions.html" %}
-                    </div>
+                <h2 class="card-title text-base">Trust material</h2>
+                <p class="text-sm opacity-70 mt-0">Download the Root or chain for deployment to your fleet.</p>
+                <div class="card-actions justify-end mt-2">
+                    <a href="{% url 'trust:index' %}" class="btn btn-sm btn-ghost">Go to Trust</a>
                 </div>
+            </div>
+        </div>
 
-                <div class="mt-5">
-                    <h3 class="font-semibold">Step 2. Sign this Web UI</h3>
-                    <p class="text-sm opacity-70 mt-1">Once step 1 is done <strong>on this device</strong>, click the button. nginx will reload with a fresh cert from your new CA.</p>
-                    <div class="alert alert-warning mt-2 text-sm">
-                        <span>If you click before installing the Root, the browser will block this page as signed by an unknown CA and you'll have no way back in except from another device (or by restoring <code class="font-mono">/opt/forgedca/certs/forgedca.crt</code> by hand from SSH).</span>
-                    </div>
-                    <form method="post" action="{% url 'ca:sign_webui' %}" class="mt-3">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-primary">Sign Web UI with ForgedCA</button>
-                    </form>
+        <div class="card bg-base-100 shadow">
+            <div class="card-body">
+                <h2 class="card-title text-base">Authorities</h2>
+                <p class="text-sm opacity-70 mt-0">{{ config.roles_selected|join:", " }} &mdash; all CA keys live on this node.</p>
+                <div class="card-actions justify-end mt-2">
+                    <a href="{% url 'ca:authorities' %}" class="btn btn-sm btn-ghost">View Authorities</a>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    {% if config.is_issuing %}
+        <div class="alert alert-info">
+            <div>
+                <strong>step-ca daemon &mdash; coming in slice 2.</strong>
+                <div class="text-sm opacity-80 mt-1">The <code class="font-mono">ca.json</code> has been written to <code class="font-mono">/etc/step-ca/ca.json</code> but the daemon isn't running yet. ACME provisioner support, the Client Onboarding page with copy-paste enrollment commands, short-lifetime leaf defaults, and start/stop controls all arrive in slice 2 under the <a href="{% url 'acme:index' %}" class="link">ACME</a> menu item.</div>
             </div>
         </div>
     {% endif %}
 
     <div class="card bg-base-100 shadow">
         <div class="card-body">
-            <h2 class="card-title">CA status</h2>
+            <h2 class="card-title text-base">Node identity</h2>
             <div class="stats stats-vertical sm:stats-horizontal shadow-sm mt-2">
-                <div class="stat">
-                    <div class="stat-title">Roles</div>
-                    <div class="stat-value text-base">{{ config.roles_selected|join:" + " }}</div>
-                </div>
                 <div class="stat">
                     <div class="stat-title">Hostname</div>
                     <div class="stat-value text-base">{{ config.hostname|default:"(unset)" }}</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-title">Roles</div>
+                    <div class="stat-value text-base">{{ config.roles_selected|join:" + " }}</div>
                 </div>
                 <div class="stat">
                     <div class="stat-title">Fleet ID</div>
@@ -69,23 +75,5 @@
             </div>
         </div>
     </div>
-
-    <div class="card bg-base-100 shadow">
-        <div class="card-body">
-            <h2 class="card-title">Trust downloads</h2>
-            <p class="text-sm opacity-70 mt-0">Pick the certificate file that matches your target. Downloads are public by default so scripts / GPO / Intune / Ansible can pull them unattended &mdash; you can flip a node-level toggle to require admin auth if your environment demands it.</p>
-            <div class="mt-4">
-                {% include "partials/trust_downloads.html" %}
-            </div>
-        </div>
-    </div>
-
-    {% if config.is_issuing %}
-        <div class="alert alert-info">
-            <span>
-                <strong>step-ca daemon management:</strong> coming in slice 2. The <code class="font-mono">ca.json</code> has been written to <code class="font-mono">/etc/step-ca/ca.json</code> but the daemon is not yet running. ACME provisioner support, the Client Onboarding page with copy-paste enrollment commands, and start/stop controls all arrive together in the next slice.
-            </span>
-        </div>
-    {% endif %}
 </div>
 {% endblock %}

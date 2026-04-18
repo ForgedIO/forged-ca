@@ -1,4 +1,5 @@
+from .authorities import AuthoritiesView
 from .sign_webui import SignWebuiView
 
 
-__all__ = ["SignWebuiView"]
+__all__ = ["AuthoritiesView", "SignWebuiView"]

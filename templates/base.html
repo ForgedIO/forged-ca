@@ -12,47 +12,83 @@
     <link rel="stylesheet" href="{% static 'css/app.css' %}">
 </head>
 <body class="min-h-screen bg-base-200">
-<div class="navbar bg-neutral text-neutral-content shadow-sm px-4">
-    <div class="container mx-auto">
-        <div class="flex-1">
-            <a href="{% url 'core:home' %}" class="flex items-center gap-3" aria-label="ForgedCA home">
-                <img src="{% static 'img/forgedca-keyhole.svg' %}" alt="" class="w-10 h-10 shrink-0">
-                <span class="flex flex-col leading-tight">
-                    <span class="text-lg font-bold tracking-tight">Forged<span class="text-primary">CA</span></span>
-                    <span class="font-mono text-[9px] tracking-[0.25em] opacity-60 uppercase">PKI &middot; ACME &middot; STEP-CA</span>
-                </span>
-            </a>
+
+{% if user.is_authenticated and node_config and node_config.is_configured %}
+    {# Sidebar layout — authenticated admin pages after the install wizard. #}
+    <div class="drawer lg:drawer-open">
+        <input id="forgedca-sidebar-toggle" type="checkbox" class="drawer-toggle">
+
+        <div class="drawer-content flex flex-col min-h-screen">
+            <div class="navbar bg-base-100 border-b border-base-300 lg:hidden px-4 min-h-[3.5rem]">
+                <label for="forgedca-sidebar-toggle" class="btn btn-ghost btn-square drawer-button">
+                    <svg class="icon-sm" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                </label>
+                <div class="flex items-center gap-2 ml-2">
+                    <img src="{% static 'img/forgedca-keyhole.svg' %}" alt="" class="icon-md">
+                    <span class="font-bold">Forged<span class="text-primary">CA</span></span>
+                </div>
+            </div>
+
+            <main class="flex-1 py-8 px-4 lg:px-8 w-full max-w-6xl mx-auto">
+                {% if messages %}
+                    <div class="mb-4 space-y-2">
+                        {% for m in messages %}
+                            <div class="alert {% if m.tags == 'error' %}alert-error{% elif m.tags == 'warning' %}alert-warning{% elif m.tags == 'success' %}alert-success{% else %}alert-info{% endif %}">
+                                <span>{{ m }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                {% block content %}{% endblock %}
+            </main>
+
+            <footer class="footer footer-center p-4 text-base-content/60 text-xs">
+                <aside>
+                    <p>ForgedCA &mdash; <a class="link" href="https://github.com/ForgedIO/forged-ca">ForgedIO/forged-ca</a></p>
+                </aside>
+            </footer>
         </div>
-        <div class="flex-none">
-            {% if user.is_authenticated %}
-                <span class="mr-3 text-sm opacity-70">{{ user.username }}</span>
-                <form method="post" action="{% url 'core:logout' %}" class="inline">
-                    {% csrf_token %}
-                    <button class="btn btn-sm btn-ghost" type="submit">Sign out</button>
-                </form>
-            {% endif %}
+
+        <div class="drawer-side z-20">
+            <label for="forgedca-sidebar-toggle" class="drawer-overlay"></label>
+            {% include "partials/sidebar.html" %}
         </div>
     </div>
-</div>
+{% else %}
+    {# Centered layout — login, change-password, MFA, wizard steps. No sidebar
+       until node_config.is_configured. The install flow is a focused single-
+       column journey. #}
+    <div class="min-h-screen flex flex-col">
+        <header class="px-4 py-4 border-b border-base-300 bg-base-100">
+            <div class="max-w-5xl mx-auto flex items-center gap-3">
+                <img src="{% static 'img/forgedca-keyhole.svg' %}" alt="" class="icon-md">
+                <span class="flex flex-col leading-tight">
+                    <span class="font-bold text-lg">Forged<span class="text-primary">CA</span></span>
+                    <span class="font-mono text-[9px] tracking-[0.25em] opacity-60 uppercase">PKI &middot; ACME &middot; STEP-CA</span>
+                </span>
+            </div>
+        </header>
 
-<main class="container mx-auto py-8 px-4">
-    {% if messages %}
-        <div class="mb-4 space-y-2">
-            {% for m in messages %}
-                <div class="alert {% if m.tags == 'error' %}alert-error{% elif m.tags == 'warning' %}alert-warning{% elif m.tags == 'success' %}alert-success{% else %}alert-info{% endif %}">
-                    <span>{{ m }}</span>
+        <main class="flex-1 py-8 px-4 w-full max-w-4xl mx-auto">
+            {% if messages %}
+                <div class="mb-4 space-y-2">
+                    {% for m in messages %}
+                        <div class="alert {% if m.tags == 'error' %}alert-error{% elif m.tags == 'warning' %}alert-warning{% elif m.tags == 'success' %}alert-success{% else %}alert-info{% endif %}">
+                            <span>{{ m }}</span>
+                        </div>
+                    {% endfor %}
                 </div>
-            {% endfor %}
-        </div>
-    {% endif %}
+            {% endif %}
+            {% block content %}{% endblock %}
+        </main>
 
-    {% block content %}{% endblock %}
-</main>
+        <footer class="footer footer-center p-4 text-base-content/60 text-xs">
+            <aside>
+                <p>ForgedCA &mdash; <a class="link" href="https://github.com/ForgedIO/forged-ca">ForgedIO/forged-ca</a></p>
+            </aside>
+        </footer>
+    </div>
+{% endif %}
 
-<footer class="footer footer-center p-4 text-base-content/60">
-    <aside>
-        <p>ForgedCA &mdash; <a class="link" href="https://github.com/ForgedIO/forged-ca">ForgedIO/forged-ca</a></p>
-    </aside>
-</footer>
 </body>
 </html>

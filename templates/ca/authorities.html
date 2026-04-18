@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Authorities &mdash; ForgedCA{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div>
+        <h1 class="text-2xl font-bold">Authorities</h1>
+        <p class="text-sm opacity-70 mt-1">Every certificate authority this node operates &mdash; what's been generated, where the keys live, which tier signs what.</p>
+    </div>
+
+    <div class="space-y-4">
+        {% for t in tiers %}
+            <div class="card bg-base-100 shadow {% if t.active %}border-l-4 border-primary{% else %}opacity-60{% endif %}">
+                <div class="card-body">
+                    <div class="flex items-start justify-between gap-4 flex-wrap">
+                        <div>
+                            <h2 class="card-title">{{ t.name }}</h2>
+                            {% if t.active %}
+                                <p class="text-sm opacity-70 mt-0">Signed by <strong>{{ t.signer }}</strong> &middot; path-length constraint <strong>{{ t.pathlen }}</strong></p>
+                            {% else %}
+                                <p class="text-sm opacity-70 mt-0">Not enabled on this node.</p>
+                            {% endif %}
+                        </div>
+                        {% if t.active %}
+                            <span class="badge badge-primary">Active</span>
+                        {% else %}
+                            <span class="badge">Disabled</span>
+                        {% endif %}
+                    </div>
+
+                    {% if t.active %}
+                        <div class="overflow-x-auto mt-3">
+                            <table class="table table-sm">
+                                <tbody>
+                                    <tr>
+                                        <th class="w-40">Subject CN</th>
+                                        <td><code class="font-mono text-xs">{{ t.cn }}</code></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Lifetime</th>
+                                        <td>{{ t.lifetime_days }} days</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Cert path</th>
+                                        <td><code class="font-mono text-xs">{{ t.cert_path }}</code></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Key path</th>
+                                        <td><code class="font-mono text-xs">{{ t.key_path }}</code></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="card-actions justify-end mt-3">
+                            <span class="text-xs opacity-50">Rotation / offline-ceremony actions coming in a later slice.</span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

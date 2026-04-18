@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Templates &mdash; ForgedCA{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div>
+        <h1 class="text-2xl font-bold">Templates</h1>
+        <p class="text-sm opacity-70 mt-1">Reusable certificate templates &mdash; allowed EKUs, key usage, validity bounds, name constraints. Bound to ACME provisioners or used for non-ACME CSR signing.</p>
+    </div>
+
+    <div class="alert alert-info">
+        <div>
+            <strong>Slice 3 lights this up.</strong>
+            <ul class="list-disc pl-6 mt-2 text-sm space-y-0.5">
+                <li>CRUD UI for templates &mdash; name, key-type allowlist, validity range, EKU set, key usage, SAN name-constraints</li>
+                <li>Default "Web Server (Server + optional Client Auth)" template that ships out-of-the-box</li>
+                <li>ACME provisioners bind to a template (EKU intersection logic: CSR requested EKUs &cap; template-allowed EKUs + forced-always)</li>
+                <li>Non-ACME signing UI picks a compatible template from the list, or admin opts into "Passthrough (advanced)"</li>
+                <li>Federation (slice 13): templates created on Issuing push up to their parent Intermediate; siblings inherit</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

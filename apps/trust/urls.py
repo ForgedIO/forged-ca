@@ -6,6 +6,7 @@ from .views import (
     IntermediateCrtView,
     IssuerCrtView,
     RootCrtView,
+    TrustIndexView,
 )
 
 
@@ -13,6 +14,7 @@ app_name = "trust"
 
 
 urlpatterns = [
+    path("", TrustIndexView.as_view(), name="index"),
     path("root.crt", RootCrtView.as_view(), name="root_crt"),
     path("intermediate.crt", IntermediateCrtView.as_view(), name="intermediate_crt"),
     path("issuer.crt", IssuerCrtView.as_view(), name="issuer_crt"),

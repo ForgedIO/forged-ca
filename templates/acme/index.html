@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}ACME &mdash; ForgedCA{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div>
+        <h1 class="text-2xl font-bold">ACME</h1>
+        <p class="text-sm opacity-70 mt-1">Automated Certificate Management Environment &mdash; how your servers get leaf certs from this Issuing CA without manual CSR shuffling.</p>
+    </div>
+
+    <div class="alert alert-info">
+        <div>
+            <strong>Slice 2 lights this up.</strong>
+            <ul class="list-disc pl-6 mt-2 text-sm space-y-0.5">
+                <li>Start the <code class="font-mono">step-ca</code> daemon and serve the ACME directory over HTTPS</li>
+                <li>Default <code class="font-mono">forgedca-acme</code> provisioner bound to a "Web Server (Server + optional Client Auth)" template</li>
+                <li>Configurable leaf lifetime &mdash; defaults to short (30&ndash;90 days, industry-typical) with renew-at-2/3-lifetime auto-timer</li>
+                <li><strong>Client Onboarding</strong> page with the ACME directory URL + copy-paste commands for <code class="font-mono">step</code>, <code class="font-mono">certbot</code>, <code class="font-mono">acme.sh</code>, cert-manager, Traefik, Caddy, nginx</li>
+                <li>HTTP-01 validation always; DNS-01 as a plugin (Cloudflare + Route53 first)</li>
+                <li>Admin UI's own cert transitions to ACME auto-renewal on the Settings page once this slice lands</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

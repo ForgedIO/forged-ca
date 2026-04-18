@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Audit log &mdash; ForgedCA{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div>
+        <h1 class="text-2xl font-bold">Audit log</h1>
+        <p class="text-sm opacity-70 mt-1">Append-only record of everything that happened on this node &mdash; who signed what, when, from which IP.</p>
+    </div>
+
+    <div class="alert alert-info">
+        <div>
+            <strong>Slice 7 lights this up.</strong>
+            <ul class="list-disc pl-6 mt-2 text-sm space-y-0.5">
+                <li>Per-node append-only event log &mdash; cert issuance, revocation, template changes, login events, settings changes</li>
+                <li>Filter by actor, event type, time range</li>
+                <li>Export (CSV / JSON) for SIEM ingestion</li>
+                <li>Ties in with syslog (slice 9) so the same events hit your central log store</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

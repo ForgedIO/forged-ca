@@ -5,6 +5,7 @@ from .logout import LogoutView
 from .mfa_setup import MfaSetupView
 from .mfa_setup_confirm import MfaSetupConfirmView
 from .mfa_verify import MfaVerifyView
+from .settings import SettingsView
 
 
 __all__ = [
@@ -15,4 +16,5 @@ __all__ = [
     "MfaSetupView",
     "MfaSetupConfirmView",
     "MfaVerifyView",
+    "SettingsView",
 ]

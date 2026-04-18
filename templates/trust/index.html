@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Trust &mdash; ForgedCA{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div>
+        <h1 class="text-2xl font-bold">Trust</h1>
+        <p class="text-sm opacity-70 mt-1">Download the Root CA and chain files so devices in your fleet trust certificates issued here. Public by default so scripts / GPO / Intune / Ansible can pull unattended.</p>
+    </div>
+
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h2 class="card-title">Trust downloads</h2>
+            {% include "partials/trust_downloads.html" %}
+        </div>
+    </div>
+
+    <div class="card bg-base-100 shadow border-l-4 border-info">
+        <div class="card-body">
+            <h2 class="card-title text-base">Fleet deployment kits <span class="badge">Slice 5</span></h2>
+            <p class="text-sm opacity-70 mt-0">
+                Coming next in the roadmap: one-click installer downloads per target so admins can deploy the Root across a whole fleet without reading distro docs.
+            </p>
+            <ul class="text-sm opacity-80 mt-2 list-disc pl-6 space-y-0.5">
+                <li>Windows &mdash; <code class="font-mono text-xs">.reg</code>, PowerShell, MSI</li>
+                <li>macOS &mdash; <code class="font-mono text-xs">.mobileconfig</code> profile</li>
+                <li>Linux &mdash; distro-detecting install script (Debian/Ubuntu + RHEL/Rocky paths)</li>
+                <li>Firefox &mdash; <code class="font-mono text-xs">policies.json</code> template</li>
+                <li>Windows fleet &mdash; GPO ADMX template</li>
+                <li>macOS / iOS fleet &mdash; Intune configuration profile</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

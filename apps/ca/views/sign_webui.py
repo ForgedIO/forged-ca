@@ -29,13 +29,13 @@ class SignWebuiView(LoginRequiredMixin, View):
                 request,
                 "This node does not have a local CA chain capable of signing the Web UI cert.",
             )
-            return redirect("core:home")
+            return redirect("core:settings")
 
         try:
             keygen.generate_webui_cert(config)
         except keygen.KeygenError as e:
             messages.error(request, f"Web UI certificate issuance failed: {e}")
-            return redirect("core:home")
+            return redirect("core:settings")
 
         config.save(update_fields=["webui_cert_path", "webui_key_path"])
         messages.success(
@@ -43,4 +43,4 @@ class SignWebuiView(LoginRequiredMixin, View):
             "Web UI certificate swapped. Refresh this page — if you've installed "
             "the Root on this device, the browser will show a trusted lock.",
         )
-        return redirect("core:home")
+        return redirect("core:settings")
