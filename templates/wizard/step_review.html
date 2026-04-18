@@ -41,11 +41,23 @@
     </table>
 </div>
 
-<form method="post" class="mt-4">
+<form method="post" class="mt-4" id="generate-form">
     {% csrf_token %}
     <div class="card-actions justify-between">
         <a href="{% url 'wizard:step_lifetimes' %}" class="btn btn-ghost">Back</a>
-        <button type="submit" class="btn btn-primary">Generate keys and certs</button>
+        <button type="submit" class="btn btn-primary" id="generate-btn">Generate keys and certs</button>
     </div>
 </form>
+
+<script>
+(() => {
+    const form = document.getElementById('generate-form');
+    const btn = document.getElementById('generate-btn');
+    if (!form || !btn) return;
+    form.addEventListener('submit', () => {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading loading-spinner loading-sm"></span> Generating keys\u2026';
+    });
+})();
+</script>
 {% endblock %}

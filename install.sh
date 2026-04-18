@@ -153,37 +153,74 @@ systemctl enable --now "${POSTGRES_SVC}" 2>/dev/null || true
 systemctl enable --now "${REDIS_SVC}" 2>/dev/null || true
 
 # ---------------------------------------------------------------------------
-# step-ca installation
+# step-ca + step CLI installation
 # ---------------------------------------------------------------------------
+# Install via the official Smallstep .deb / .rpm packages. The versioned
+# tarball approach is brittle: the certificates and cli repos release
+# independently and not every <version> number exists in both. Packages
+# put binaries on PATH, handle permissions, and are reversible through
+# the distro's package manager if the admin ever wants to purge them.
+STEP_VERSION="0.30.2"
+ARCH="$(uname -m)"
+case "${ARCH}" in
+    x86_64)  STEP_DEB_ARCH="amd64";  STEP_RPM_ARCH="x86_64" ;;
+    aarch64) STEP_DEB_ARCH="arm64";  STEP_RPM_ARCH="aarch64" ;;
+    *)       STEP_DEB_ARCH="";       STEP_RPM_ARCH="" ;;
+esac
+
 echo "==> Installing step-ca and step CLI..."
-if ! command -v step-ca &>/dev/null; then
-    STEP_CA_VERSION="0.28.1"
-    ARCH="$(uname -m)"
-    case "${ARCH}" in
-        x86_64)  STEP_ARCH="amd64" ;;
-        aarch64) STEP_ARCH="arm64" ;;
-        *) echo "    WARN: unsupported architecture '${ARCH}' for step-ca auto-install" >&2 ;;
-    esac
-    if [[ -n "${STEP_ARCH:-}" ]]; then
-        TMPDIR="$(mktemp -d)"
-        cd "${TMPDIR}"
-        for pkg in step-ca step-cli; do
-            URL="https://github.com/smallstep/certificates/releases/download/v${STEP_CA_VERSION}/${pkg}_linux_${STEP_CA_VERSION}_${STEP_ARCH}.tar.gz"
-            [[ "${pkg}" == "step-cli" ]] && URL="https://github.com/smallstep/cli/releases/download/v${STEP_CA_VERSION}/step_linux_${STEP_CA_VERSION}_${STEP_ARCH}.tar.gz"
-            if wget -q "${URL}" -O "${pkg}.tar.gz"; then
-                tar -xzf "${pkg}.tar.gz"
-                find . -type f -name "step-ca" -exec cp {} /usr/bin/step-ca \;
-                find . -type f -name "step" -exec cp {} /usr/bin/step \;
-            else
-                echo "    WARN: could not download ${pkg} from ${URL} — install step-ca manually"
-            fi
-        done
-        chmod 755 /usr/bin/step-ca /usr/bin/step 2>/dev/null || true
-        cd "${SCRIPT_DIR}"
-        rm -rf "${TMPDIR}"
-    fi
+NEED_STEP_CA="yes"; command -v step-ca &>/dev/null && NEED_STEP_CA="no"
+NEED_STEP_CLI="yes"; command -v step    &>/dev/null && NEED_STEP_CLI="no"
+
+if [[ "${NEED_STEP_CA}" == "no" && "${NEED_STEP_CLI}" == "no" ]]; then
+    echo "    step-ca and step already installed: $(step-ca version 2>/dev/null | head -1); $(step version 2>/dev/null | head -1)"
 else
-    echo "    step-ca already installed: $(step-ca version 2>/dev/null | head -1)"
+    STEP_TMP="$(mktemp -d)"
+    trap "rm -rf ${STEP_TMP}" EXIT
+
+    case "${PKG_MANAGER}" in
+        apt)
+            if [[ -z "${STEP_DEB_ARCH}" ]]; then
+                echo "    ERROR: unsupported architecture '${ARCH}' for step-ca .deb." >&2
+                exit 1
+            fi
+            CERT_URL="https://github.com/smallstep/certificates/releases/download/v${STEP_VERSION}/step-ca_${STEP_VERSION}-1_${STEP_DEB_ARCH}.deb"
+            CLI_URL="https://github.com/smallstep/cli/releases/download/v${STEP_VERSION}/step-cli_${STEP_VERSION}-1_${STEP_DEB_ARCH}.deb"
+            if [[ "${NEED_STEP_CA}" == "yes" ]]; then
+                wget -q "${CERT_URL}" -O "${STEP_TMP}/step-ca.deb" || { echo "    ERROR: failed to download ${CERT_URL}" >&2; exit 1; }
+                dpkg -i "${STEP_TMP}/step-ca.deb"
+            fi
+            if [[ "${NEED_STEP_CLI}" == "yes" ]]; then
+                wget -q "${CLI_URL}" -O "${STEP_TMP}/step-cli.deb" || { echo "    ERROR: failed to download ${CLI_URL}" >&2; exit 1; }
+                dpkg -i "${STEP_TMP}/step-cli.deb"
+            fi
+            ;;
+        dnf|yum|zypper)
+            if [[ -z "${STEP_RPM_ARCH}" ]]; then
+                echo "    ERROR: unsupported architecture '${ARCH}' for step-ca .rpm." >&2
+                exit 1
+            fi
+            CERT_URL="https://github.com/smallstep/certificates/releases/download/v${STEP_VERSION}/step-ca-${STEP_VERSION}-1.${STEP_RPM_ARCH}.rpm"
+            CLI_URL="https://github.com/smallstep/cli/releases/download/v${STEP_VERSION}/step-cli-${STEP_VERSION}-1.${STEP_RPM_ARCH}.rpm"
+            INSTALL_CMD=("${PKG_MANAGER}" "install" "-y")
+            [[ "${PKG_MANAGER}" == "zypper" ]] && INSTALL_CMD=(zypper --non-interactive install --allow-unsigned-rpm)
+            if [[ "${NEED_STEP_CA}" == "yes" ]]; then
+                "${INSTALL_CMD[@]}" "${CERT_URL}" || { echo "    ERROR: step-ca .rpm install failed (${CERT_URL})" >&2; exit 1; }
+            fi
+            if [[ "${NEED_STEP_CLI}" == "yes" ]]; then
+                "${INSTALL_CMD[@]}" "${CLI_URL}" || { echo "    ERROR: step-cli .rpm install failed (${CLI_URL})" >&2; exit 1; }
+            fi
+            ;;
+    esac
+
+    rm -rf "${STEP_TMP}"
+    trap - EXIT
+
+    # Verify both binaries ended up on PATH. Bail loudly if not — the install
+    # wizard's key-generation step will fail otherwise.
+    command -v step-ca &>/dev/null || { echo "    ERROR: step-ca not on PATH after install." >&2; exit 1; }
+    command -v step    &>/dev/null || { echo "    ERROR: step not on PATH after install." >&2; exit 1; }
+    echo "    Installed: $(step-ca version 2>/dev/null | head -1); $(step version 2>/dev/null | head -1)"
 fi
 
 # ---------------------------------------------------------------------------
