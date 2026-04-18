@@ -2,6 +2,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect, render
 from django.views import View
 
+from apps.nodes.helpers.network import default_webui_sans
 from apps.nodes.models import NodeConfig
 from apps.wizard.forms import LifetimesForm
 from apps.wizard.helpers.chain import apply_lifetimes
@@ -47,6 +48,8 @@ class StepLifetimesView(LoginRequiredMixin, View):
             "root_lifetime_days": config.root_lifetime_days,
             "intermediate_lifetime_days": config.intermediate_lifetime_days,
             "issuing_lifetime_days": config.issuing_lifetime_days,
+            "webui_sans": config.webui_sans or default_webui_sans(config.hostname),
+            "webui_lifetime_days": config.webui_lifetime_days,
         }
 
     def _context(self, form, config):
