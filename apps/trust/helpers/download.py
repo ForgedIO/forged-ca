@@ -47,3 +47,40 @@ def require_configured() -> NodeConfig:
     if not config.is_configured:
         raise Http404("CA not yet configured")
     return config
+
+
+def read_all_pems(config) -> dict[str, str]:
+    """Return the PEM text content of every cert this node owns, plus the
+    concatenated chain and bundle. Keys match the context variable names
+    used by the trust-download partial: root, intermediate, issuing, chain,
+    bundle. Missing tiers are simply absent from the dict."""
+    pems: dict[str, str] = {}
+    tier_paths = {
+        "root": config.root_cert_path,
+        "intermediate": config.intermediate_cert_path,
+        "issuing": config.issuing_cert_path,
+    }
+    for tier, path_str in tier_paths.items():
+        if path_str and Path(path_str).is_file():
+            try:
+                pems[tier] = Path(path_str).read_text()
+            except OSError:
+                pass
+
+    chain = "".join(
+        pems[t].rstrip() + "\n"
+        for t in ("root", "intermediate", "issuing")
+        if t in pems
+    )
+    if chain:
+        pems["chain"] = chain
+
+    bundle = "".join(
+        pems[t].rstrip() + "\n"
+        for t in ("root", "intermediate")
+        if t in pems
+    )
+    if bundle:
+        pems["bundle"] = bundle
+
+    return pems

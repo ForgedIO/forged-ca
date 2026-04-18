@@ -3,6 +3,7 @@ from django.shortcuts import redirect, render
 from django.views import View
 
 from apps.nodes.models import NodeConfig
+from apps.trust.helpers.download import read_all_pems
 
 
 class FinishView(LoginRequiredMixin, View):
@@ -12,4 +13,7 @@ class FinishView(LoginRequiredMixin, View):
         config = NodeConfig.load()
         if not config.is_configured:
             return redirect("wizard:step_role")
-        return render(request, self.template_name, {"config": config})
+        return render(request, self.template_name, {
+            "config": config,
+            "pems": read_all_pems(config),
+        })
