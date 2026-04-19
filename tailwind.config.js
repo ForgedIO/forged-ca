@@ -102,8 +102,8 @@ module.exports = {
           "base-200": "#232831",   // cards
           "base-300": "#2D343E",   // borders / dividers
           "base-content": "#EDE7DB",
-          "info": "#6B89B8",       // Steel brightens in dark
-          "info-content": "#0D1117",
+          "info": "#4E6A94",       // Match light — steel-blue info card stays identical in both modes
+          "info-content": "#FFFFFF",
           "success": "#6FB67C",    // brighter for dark surfaces
           "success-content": "#0D1117",
           "warning": "#E08B3B",
