@@ -226,29 +226,29 @@
     .client-tabs-bar {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.25rem;
-        border-bottom: 1px solid hsl(var(--b3));
+        gap: 0.5rem;
         margin-bottom: 1rem;
     }
     .client-tab {
         padding: 0.5rem 1rem;
-        background-color: hsl(var(--b2));
+        background-color: transparent;
         color: hsl(var(--bc));
-        border: 1px solid hsl(var(--b3));
-        border-bottom: 0;
-        border-radius: 0.375rem 0.375rem 0 0;
+        border: 2px solid transparent;
+        border-radius: 0.375rem;
         cursor: pointer;
         font-weight: 500;
         font-size: 0.875rem;
-        transition: background-color 120ms ease, color 120ms ease;
+        transition: border-color 120ms ease, color 120ms ease, background-color 120ms ease;
     }
     .client-tab:hover {
-        background-color: hsl(var(--b3));
+        background-color: hsl(var(--b2));
+        color: hsl(var(--p));
     }
     .client-tab[aria-selected="true"] {
-        background-color: hsl(var(--p));
-        color: hsl(var(--pc));
         border-color: hsl(var(--p));
+        color: hsl(var(--p));
+        font-weight: 600;
+        background-color: transparent;
     }
     .client-panel[hidden] {
         display: none !important;
