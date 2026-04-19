@@ -91,7 +91,7 @@ module.exports = {
       {
         "forgedca-dark": {
           "primary": "#6B89B8",
-          "primary-content": "#0D1117",
+          "primary-content": "#FFFFFF",
           "secondary": "#4E6A94",
           "secondary-content": "#EDE7DB",
           "accent": "#E08B3B",
