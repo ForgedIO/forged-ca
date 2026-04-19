@@ -95,15 +95,27 @@ def journal_tail(lines: int = 30) -> str:
     """Return the last `lines` of journalctl -u step-ca, without following.
     Surfaced on the Settings daemon card so the admin can see crash reasons
     (missing password-file, bad ca.json path, port already in use, …) without
-    SSHing to the box."""
-    r = subprocess.run(
-        ["sudo", "-n", _JOURNALCTL, "-u", SERVICE,
-         "--no-pager", "-n", str(lines), "--output=short-iso"],
-        capture_output=True, text=True, timeout=5, check=False,
-    )
+    SSHing to the box.
+
+    The sudoers rule matches the exact argv we invoke, so `lines` is pinned
+    to 30 here. If we need a different tail size, widen the sudoers rule
+    (or add a second one) rather than parameterising in Python — argv globs
+    in sudoers are surprisingly finicky across distros.
+    """
+    cmd = ["sudo", "-n", _JOURNALCTL, "-u", SERVICE,
+           "--no-pager", "-n", "30", "--output=short-iso"]
+    r = subprocess.run(cmd, capture_output=True, text=True, timeout=5, check=False)
     if r.returncode != 0:
         err = (r.stderr or "").strip()
-        return f"(could not read journal: {err or 'unknown error'})"
+        hint = ""
+        if "password is required" in err:
+            hint = (
+                "\n\nThis means /etc/sudoers.d/forgedca-stepca doesn't have a "
+                "matching NOPASSWD rule for journalctl. Re-run "
+                "`sudo ./update.sh` to refresh the drop-in. "
+                f"The exact command we tried: {' '.join(cmd)}"
+            )
+        return f"(could not read journal: {err or 'unknown error'}){hint}"
     return (r.stdout or "").strip() or "(journal empty)"
 
 

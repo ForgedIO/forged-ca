@@ -44,9 +44,18 @@
                         <form method="post" action="{% url 'ca:daemon_action' 'stop' %}" class="inline">
                             {% csrf_token %}<button type="submit" class="btn btn-sm btn-error">Stop</button>
                         </form>
-                    {% else %}
+                    {% elif step_ca.substate == 'inactive' or step_ca.substate == 'dead' %}
                         <form method="post" action="{% url 'ca:daemon_action' 'start' %}" class="inline">
                             {% csrf_token %}<button type="submit" class="btn btn-sm btn-primary">Start</button>
+                        </form>
+                    {% else %}
+                        {# Anything else (activating / auto-restart / failed) — the admin
+                           needs to break a crash loop first, then investigate the log. #}
+                        <form method="post" action="{% url 'ca:daemon_action' 'stop' %}" class="inline">
+                            {% csrf_token %}<button type="submit" class="btn btn-sm btn-error">Stop (break crash loop)</button>
+                        </form>
+                        <form method="post" action="{% url 'ca:daemon_action' 'restart' %}" class="inline">
+                            {% csrf_token %}<button type="submit" class="btn btn-sm btn-primary">Retry start</button>
                         </form>
                     {% endif %}
                     {% if not step_ca.enabled %}
@@ -55,7 +64,11 @@
                         </form>
                     {% endif %}
                 </div>
-                {% if not step_ca.active %}
+                {% if step_ca.substate == 'activating' %}
+                    <div class="alert alert-error mt-3 text-sm">
+                        <span><strong>Crash loop.</strong> step-ca exits on start-up and systemd respawns it every 5 seconds. Click <strong>Stop (break crash loop)</strong>, then read the log below for the error.</span>
+                    </div>
+                {% elif not step_ca.active %}
                     <div class="alert alert-warning mt-3 text-sm">
                         <span>Daemon isn't running. ACME enrolment is paused until you start it.</span>
                     </div>
