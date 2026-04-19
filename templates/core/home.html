@@ -15,7 +15,7 @@
                 {% if config.webui_cert_path %}
                     <p class="text-sm opacity-70 mt-0">Signed by ForgedCA &middot; {{ config.webui_lifetime_days }} days.</p>
                     <div class="card-actions justify-end mt-2">
-                        <a href="{% url 'core:settings' %}" class="btn btn-sm btn-ghost">Rotate in Settings</a>
+                        <a href="{% url 'core:settings' %}" class="btn btn-sm btn-primary">Rotate in Settings</a>
                     </div>
                 {% else %}
                     <p class="text-sm opacity-70 mt-0">Still on the install-time self-signed cert. Install the Root on your device, then sign.</p>
@@ -31,7 +31,7 @@
                 <h2 class="card-title text-base">Trust material</h2>
                 <p class="text-sm opacity-70 mt-0">Download the Root or chain for deployment to your fleet.</p>
                 <div class="card-actions justify-end mt-2">
-                    <a href="{% url 'trust:index' %}" class="btn btn-sm btn-ghost">Go to Trust</a>
+                    <a href="{% url 'trust:index' %}" class="btn btn-sm btn-primary">Go to Trust</a>
                 </div>
             </div>
         </div>
@@ -41,7 +41,7 @@
                 <h2 class="card-title text-base">Authorities</h2>
                 <p class="text-sm opacity-70 mt-0">{{ config.roles_selected|join:", " }} &mdash; all CA keys live on this node.</p>
                 <div class="card-actions justify-end mt-2">
-                    <a href="{% url 'ca:authorities' %}" class="btn btn-sm btn-ghost">View Authorities</a>
+                    <a href="{% url 'ca:authorities' %}" class="btn btn-sm btn-primary">View Authorities</a>
                 </div>
             </div>
         </div>
