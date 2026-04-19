@@ -11,6 +11,27 @@ from pathlib import Path
 from django.conf import settings
 
 
+def _provisioners() -> list[dict]:
+    """Build the authority.provisioners[] array from model state.
+
+    Kept in this file (rather than models.to_ca_json directly in render())
+    so the dependency from renderer → acme is one-way and testable without
+    standing up a whole Django-models context.
+    """
+    # Late import: apps.acme.models pulls in Django models which require
+    # settings, and callers import renderer before Django is fully set up in
+    # some code paths (install scripts).
+    from apps.acme.models import ACMEProvisioner
+
+    try:
+        acme = ACMEProvisioner.load()
+    except Exception:
+        # DB unavailable (fresh install pre-migrate) — render an empty
+        # provisioner list so step-ca at least boots.
+        return []
+    return [acme.to_ca_json()] if acme.enabled else []
+
+
 def render(config) -> dict | None:
     """Build the ca.json dict for this node, or None if step-ca shouldn't run.
 
@@ -41,9 +62,7 @@ def render(config) -> dict | None:
             ),
         },
         "authority": {
-            # Provisioners are intentionally empty in slice 1. The ACME
-            # provisioner + default "Web Server" template land in slice 2.
-            "provisioners": [],
+            "provisioners": _provisioners(),
         },
         "tls": {
             "cipherSuites": [
