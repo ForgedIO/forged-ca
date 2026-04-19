@@ -20,7 +20,9 @@ Each slice is one testable deliverable. Check `docs/CHANGELOG.md` for per-commit
 - [ ] **Slice 4** — non-ACME CSR signing UI: admin uploads CSR → picks a compatible template → signs; explicit "passthrough (advanced)" opt-in for bare-CSR signing
 - [ ] **Slice 4.5** — Settings page: HTTPS port live-reconfig (8443 → 443 toggle with graceful reconnect), trust-download auth toggle, admin user management, node-level rename
 - [ ] **Slice 5** — **Trust-store distribution helpers** (moved up from v2): Windows `.reg` / PowerShell / MSI, macOS `.mobileconfig`, Linux `/etc/ca-certificates` installer script, Firefox `policies.json`, GPO ADMX template, Intune configuration profile. One-click download per target so admins can deploy the Root to any fleet without reading distro docs
-- [ ] **Slice 6** — local dashboard: rollup counts (issued, expiring soon, revoked) and a recent-issuances list with a revoke button
+- [ ] **Slice 5.5** — DNS-01 helper: built-in acme-dns style forwarder so admins configure DNS provider credentials in one place (Cloudflare / Route 53 / RFC 2136 for internal BIND / PowerDNS), ACME clients CNAME `_acme-challenge.*` to the forwarder, ForgedCA publishes the TXT. Solves the "every machine needs a DNS API token" pain; internal and public DNS use the same mechanism
+- [ ] **Slice 5.7** — Self-ACME for ForgedCA's own Web UI cert: a toggle on each node's Settings page that replaces the manual "Sign Web UI" flow with auto-renewal via ACME against the local (or a federated) Issuing CA. Eats our own dogfood — ForgedCA runs on short-lived ACME certs
+- [ ] **Slice 6** — local dashboard: rollup counts (issued, expiring soon, revoked), recent-issuances list with a revoke button, and a daily-issuance sparkline on the main tile. Audit-log + dashboard charts land together here
 - [ ] **Slice 7** — revocation UI + per-node append-only audit log
 - [ ] **Slice 8** — email backends: SMTP + Microsoft Graph API; password reset flow; MFA email-recovery bypass
 - [ ] **Slice 9** — syslog forwarder settings (DB-driven destination, severity thresholds)
