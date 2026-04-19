@@ -89,6 +89,14 @@ sudo -u "${APP_USER}" bash -c "cd ${APP_HOME} && \
     DJANGO_SETTINGS_MODULE=forgedca.settings.production \
     ${PYTHON} manage.py encrypt_ca_keys"
 
+# Re-render ca.json from current model state so newly-added config (ACME
+# provisioner today, templates in later slices) reaches step-ca on every
+# deploy without the admin having to click Save.
+echo "==> Re-rendering /etc/step-ca/ca.json..."
+sudo -u "${APP_USER}" bash -c "cd ${APP_HOME} && \
+    DJANGO_SETTINGS_MODULE=forgedca.settings.production \
+    ${PYTHON} manage.py render_ca_json"
+
 # ---------------------------------------------------------------------------
 # Heal CA-directory permissions
 #
