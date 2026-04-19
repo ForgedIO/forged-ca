@@ -1,6 +1,3 @@
-{# Left-rail navigation. Role-gated: sections that require Issuing or
-   Intermediate are hidden when this node doesn't have those roles. Expects
-   `config` (NodeConfig) and `request` (auto-injected) in context. #}
 {% load static %}
 
 {% with ns=request.resolver_match.namespace un=request.resolver_match.url_name %}
@@ -24,7 +21,7 @@
                 </a>
             </li>
 
-            {% if config.is_issuing %}
+            {% if node_config.is_issuing %}
             <li>
                 <a href="{% url 'issuance:index' %}"
                    class="{% if ns == 'issuance' %}menu-active{% endif %}">
@@ -50,7 +47,7 @@
                 </a>
             </li>
 
-            {% if config.is_issuing %}
+            {% if node_config.is_issuing %}
             <li>
                 <a href="{% url 'acme:index' %}"
                    class="{% if ns == 'acme' %}menu-active{% endif %}">
@@ -60,7 +57,7 @@
             </li>
             {% endif %}
 
-            {% if config.is_intermediate or config.is_issuing %}
+            {% if node_config.is_intermediate or node_config.is_issuing %}
             <li>
                 <a href="{% url 'templates_app:index' %}"
                    class="{% if ns == 'templates_app' %}menu-active{% endif %}">
