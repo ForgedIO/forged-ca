@@ -33,7 +33,7 @@
                     {% csrf_token %}
                     <button type="submit" class="btn btn-sm btn-primary">Rotate / re-issue</button>
                 </form>
-            {% else %}
+            {% elif config.is_issuing %}
                 <p class="text-sm opacity-80 mt-0">
                     nginx is currently serving the install-time self-signed certificate. Replace it with a cert issued by your own CA in two steps. <strong>Do step 1 first</strong> &mdash; swapping the cert before your device trusts the new Root will lock your browser out of this page.
                 </p>
@@ -56,6 +56,28 @@
                         {% csrf_token %}
                         <button type="submit" class="btn btn-primary">Sign Web UI with ForgedCA</button>
                     </form>
+                </div>
+            {% else %}
+                <p class="text-sm opacity-80 mt-0">
+                    nginx is currently serving the install-time self-signed certificate. This node runs
+                    {% if config.is_root and config.is_intermediate %}<strong>Root &amp; Intermediate</strong>{% elif config.is_root %}<strong>Root only</strong>{% elif config.is_intermediate %}<strong>Intermediate only</strong>{% endif %} &mdash;
+                    neither tier should be signing leaf certificates directly. Keep the self-signed cert until you deploy an Issuing CA.
+                </p>
+                <div class="alert alert-info mt-3 text-sm">
+                    <div>
+                        <strong>Why we're holding off.</strong>
+                        <div class="mt-1 opacity-90">
+                            Standard PKI practice keeps Root and Intermediate keys off the leaf-signing path &mdash; their job is to sign <em>other CAs</em>, not web-server certs. Signing this admin UI directly off a Root or Intermediate would use those keys online in a way that defeats the reason you have tiers in the first place.
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <h3 class="font-semibold">What to do next</h3>
+                    <ol class="list-decimal pl-5 mt-1 space-y-1 text-sm opacity-80">
+                        <li>Deploy a second node with the <strong>Issuing CA</strong> role (next slice wires up federation for this).</li>
+                        <li>Federate it to this node so it gets its Issuing cert signed by your chain.</li>
+                        <li>Come back here and sign the Web UI off the Issuing CA.</li>
+                    </ol>
                 </div>
             {% endif %}
         </div>

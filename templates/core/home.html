@@ -17,10 +17,15 @@
                     <div class="card-actions justify-end mt-2">
                         <a href="{% url 'core:settings' %}" class="btn btn-sm btn-primary">Rotate in Settings</a>
                     </div>
-                {% else %}
+                {% elif config.is_issuing %}
                     <p class="text-sm opacity-70 mt-0">Still on the install-time self-signed cert. Install the Root on your device, then sign.</p>
                     <div class="card-actions justify-end mt-2">
                         <a href="{% url 'core:settings' %}" class="btn btn-sm btn-primary">Open Settings</a>
+                    </div>
+                {% else %}
+                    <p class="text-sm opacity-70 mt-0">Keep the install-time self-signed cert for now. Leaf certificates should come from an Issuing CA &mdash; deploy one and federate it here first.</p>
+                    <div class="card-actions justify-end mt-2">
+                        <a href="{% url 'core:settings' %}" class="btn btn-sm btn-primary">See why</a>
                     </div>
                 {% endif %}
             </div>

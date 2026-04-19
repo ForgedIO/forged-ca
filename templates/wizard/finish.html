@@ -7,6 +7,7 @@
         <span><strong>CA chain ready.</strong> Your {{ config.roles_selected|join:" + " }} certificates are created and the trust-download endpoints are live.</span>
     </div>
 
+    {% if config.is_issuing %}
     <div class="card bg-base-100 shadow border-l-4 border-accent">
         <div class="card-body">
             <h2 class="card-title">Next: get this admin UI on a CA-signed certificate</h2>
@@ -15,6 +16,29 @@
             </p>
         </div>
     </div>
+    {% else %}
+    <div class="card bg-base-100 shadow border-l-4 border-info">
+        <div class="card-body">
+            <h2 class="card-title">Next: download the Root, then plan your Issuing CA</h2>
+            <p class="text-sm opacity-80 mt-0">
+                This node runs
+                {% if config.is_root and config.is_intermediate %}<strong>Root &amp; Intermediate</strong>{% elif config.is_root %}<strong>Root only</strong>{% elif config.is_intermediate %}<strong>Intermediate only</strong>{% endif %} &mdash;
+                tiers whose job is to sign <em>other CAs</em>, not leaf certificates. nginx stays on the install-time self-signed cert for now.
+            </p>
+            <div class="alert alert-info mt-3 text-sm">
+                <div>
+                    <strong>Why we're not signing this Web UI yet.</strong>
+                    <div class="mt-1 opacity-90">
+                        Leaf certs (like this admin UI) should come from an Issuing CA. Signing them directly off a Root or Intermediate uses those keys online in a way that undoes the whole reason for tiering. Stand up an Issuing CA on a separate host, federate it to this node, and sign the Web UI off <em>that</em>.
+                    </div>
+                </div>
+            </div>
+            <p class="text-sm opacity-80 mt-3">
+                Below you'll still grab the Root so your workstations and fleet trust everything your CA eventually signs &mdash; that setup pays off the moment your Issuing CA comes online.
+            </p>
+        </div>
+    </div>
+    {% endif %}
 
     <div class="card bg-base-100 shadow">
         <div class="card-body">
@@ -43,6 +67,7 @@
         </div>
     </div>
 
+    {% if config.is_issuing %}
     <div class="card bg-base-100 shadow border-l-4 border-warning">
         <div class="card-body">
             <div class="flex items-center gap-3 mb-1">
@@ -62,6 +87,19 @@
             </div>
         </div>
     </div>
+    {% else %}
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h2 class="card-title">Head to the dashboard</h2>
+            <p class="text-sm opacity-80 mt-0">
+                Your CA chain is ready and your Root is downloadable. When you're ready, deploy an Issuing CA on a separate host and federate it back to this node &mdash; federation lands in the next slice.
+            </p>
+            <div class="card-actions justify-end mt-3">
+                <a href="{% url 'core:home' %}" class="btn btn-primary">Go to dashboard</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     <details class="card bg-base-100 shadow">
         <summary class="card-body cursor-pointer list-none font-semibold">What was written to disk (reference)</summary>

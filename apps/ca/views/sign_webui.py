@@ -24,10 +24,14 @@ class SignWebuiView(LoginRequiredMixin, View):
         if not config.is_configured:
             messages.error(request, "Finish the install wizard first.")
             return redirect("wizard:step_role")
-        if not config.has_any_role or not config.is_root:
+        if not config.is_issuing:
             messages.error(
                 request,
-                "This node does not have a local CA chain capable of signing the Web UI cert.",
+                "Web UI signing is only offered on nodes that run an Issuing CA. "
+                "On a Root- or Intermediate-only node, keep the install-time "
+                "self-signed cert until you deploy an Issuing CA and federate "
+                "it back to this node — leaf certificates should not be signed "
+                "directly off a Root or Intermediate.",
             )
             return redirect("core:settings")
 
