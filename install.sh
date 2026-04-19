@@ -263,6 +263,31 @@ chown -R "${STEP_CA_USER}:${STEP_CA_USER}" "${STEP_CA_CONFIG_DIR}" "${STEP_CA_DA
 chmod 2770 "${STEP_CA_CONFIG_DIR}" "${STEP_CA_CONFIG_DIR}/certs" "${STEP_CA_CONFIG_DIR}/secrets" "${STEP_CA_CONFIG_DIR}/db"
 chmod 0700 "${STEP_CA_DATA_DIR}"
 
+# Normalise file modes on any CA material that already exists.
+# step-cli writes *.crt at 0600 regardless of umask — the step-ca daemon
+# (running as step-ca, not forgedca) can't read them without group-r. Keys
+# are already chmodded 0640 by keygen.py; this covers certs + password.txt
+# for idempotency on re-runs.
+chmod 0640 "${STEP_CA_CONFIG_DIR}/certs"/*.crt     2>/dev/null || true
+chmod 0640 "${STEP_CA_CONFIG_DIR}/secrets"/*       2>/dev/null || true
+
+# Belt-and-braces: a default ACL on certs/ + secrets/ means any new file a
+# future code path (or step-cli upgrade, or an admin tinkering manually)
+# drops in there inherits step-ca-group read, even if the creating process
+# uses a tight umask. Requires the `acl` package; fall back silently if it
+# isn't installed — the explicit chmods above remain the primary guarantee.
+if ! command -v setfacl &>/dev/null; then
+    case "${PKG_MANAGER}" in
+        apt)       DEBIAN_FRONTEND=noninteractive apt-get install -y -qq acl >/dev/null 2>&1 || true ;;
+        dnf|yum)   "${INSTALL_CMD[@]}" acl >/dev/null 2>&1 || true ;;
+        zypper)    zypper --non-interactive install -y acl >/dev/null 2>&1 || true ;;
+    esac
+fi
+if command -v setfacl &>/dev/null; then
+    setfacl -m    g:${STEP_CA_USER}:rX "${STEP_CA_CONFIG_DIR}/certs" "${STEP_CA_CONFIG_DIR}/secrets" 2>/dev/null || true
+    setfacl -d -m g:${STEP_CA_USER}:r  "${STEP_CA_CONFIG_DIR}/certs" "${STEP_CA_CONFIG_DIR}/secrets" 2>/dev/null || true
+fi
+
 # ---------------------------------------------------------------------------
 # Python venv + dependencies
 # ---------------------------------------------------------------------------

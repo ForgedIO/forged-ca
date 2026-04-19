@@ -114,6 +114,7 @@ def generate_chain(config) -> list[GeneratedArtifact]:
         str(paths["root_cert"]),
         str(paths["root_key"]),
     ])
+    _chmod_cert(paths["root_cert"])
     _chmod_key(paths["root_key"])
     artifacts.append(GeneratedArtifact("root", paths["root_cert"], paths["root_key"]))
     config.root_cert_path = str(paths["root_cert"])
@@ -135,6 +136,7 @@ def generate_chain(config) -> list[GeneratedArtifact]:
             str(paths["int_cert"]),
             str(paths["int_key"]),
         ])
+        _chmod_cert(paths["int_cert"])
         _chmod_key(paths["int_key"])
         artifacts.append(GeneratedArtifact("intermediate", paths["int_cert"], paths["int_key"]))
         config.intermediate_cert_path = str(paths["int_cert"])
@@ -161,6 +163,7 @@ def generate_chain(config) -> list[GeneratedArtifact]:
             str(paths["iss_cert"]),
             str(paths["iss_key"]),
         ])
+        _chmod_cert(paths["iss_cert"])
         _chmod_key(paths["iss_key"])
         artifacts.append(GeneratedArtifact("issuing", paths["iss_cert"], paths["iss_key"]))
         config.issuing_cert_path = str(paths["iss_cert"])
@@ -172,6 +175,17 @@ def generate_chain(config) -> list[GeneratedArtifact]:
 def _chmod_key(path: Path) -> None:
     # Owner rw, group r (so step-ca daemon in the step-ca group can read),
     # others nothing.
+    try:
+        os.chmod(path, 0o640)
+    except OSError as e:
+        log.warning("Could not chmod %s: %s", path, e)
+
+
+def _chmod_cert(path: Path) -> None:
+    # CA certs are public info — the trust endpoints serve them to anyone —
+    # but they still need to be readable by the step-ca daemon (group read).
+    # step-cli writes certs with a tight umask that yields 0600, which blocks
+    # the daemon's startup parse of ca.json's `crt`/`root` paths.
     try:
         os.chmod(path, 0o640)
     except OSError as e:

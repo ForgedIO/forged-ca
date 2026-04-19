@@ -89,6 +89,31 @@ sudo -u "${APP_USER}" bash -c "cd ${APP_HOME} && \
     DJANGO_SETTINGS_MODULE=forgedca.settings.production \
     ${PYTHON} manage.py encrypt_ca_keys"
 
+# ---------------------------------------------------------------------------
+# Heal CA-directory permissions
+#
+# step-cli writes *.crt at mode 0600 regardless of umask, which blocks
+# step-ca (running as the step-ca user, group step-ca) from opening the
+# chain on startup. Fix in-place on existing boxes and set a default ACL
+# so future drops inherit group-read.
+# ---------------------------------------------------------------------------
+STEP_CA_CONFIG_DIR="/etc/step-ca"
+STEP_CA_USER="step-ca"
+if [[ -d "${STEP_CA_CONFIG_DIR}/certs" ]]; then
+    chmod 0640 "${STEP_CA_CONFIG_DIR}/certs"/*.crt     2>/dev/null || true
+    chmod 0640 "${STEP_CA_CONFIG_DIR}/secrets"/*       2>/dev/null || true
+    if ! command -v setfacl &>/dev/null; then
+        if   command -v apt-get &>/dev/null; then DEBIAN_FRONTEND=noninteractive apt-get install -y -qq acl >/dev/null 2>&1 || true
+        elif command -v dnf     &>/dev/null; then dnf install -y acl >/dev/null 2>&1 || true
+        elif command -v zypper  &>/dev/null; then zypper --non-interactive install -y acl >/dev/null 2>&1 || true
+        fi
+    fi
+    if command -v setfacl &>/dev/null; then
+        setfacl -m    "g:${STEP_CA_USER}:rX" "${STEP_CA_CONFIG_DIR}/certs" "${STEP_CA_CONFIG_DIR}/secrets" 2>/dev/null || true
+        setfacl -d -m "g:${STEP_CA_USER}:r"  "${STEP_CA_CONFIG_DIR}/certs" "${STEP_CA_CONFIG_DIR}/secrets" 2>/dev/null || true
+    fi
+fi
+
 if ! command -v npm &>/dev/null; then
     echo "    ERROR: npm not found on PATH." >&2
     exit 1
