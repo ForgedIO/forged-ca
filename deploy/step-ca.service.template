@@ -10,7 +10,7 @@ User=step-ca
 Group=step-ca
 Environment=STEPPATH=/etc/step-ca
 WorkingDirectory=/etc/step-ca
-ExecStart=/usr/bin/step-ca /etc/step-ca/ca.json
+ExecStart=/usr/bin/step-ca /etc/step-ca/ca.json --password-file=/etc/step-ca/secrets/password.txt
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure
 RestartSec=5

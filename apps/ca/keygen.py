@@ -13,6 +13,8 @@ from pathlib import Path
 
 from django.conf import settings
 
+from apps.ca import password_file
+
 log = logging.getLogger(__name__)
 
 
@@ -96,13 +98,16 @@ def generate_chain(config) -> list[GeneratedArtifact]:
 
     paths = _paths()
     artifacts: list[GeneratedArtifact] = []
+    pw_path = password_file.ensure()  # noqa: F841 — side-effect: writes password.txt
+    pw_file = str(Path(settings.STEP_CA_CONFIG_DIR) / "secrets" / "password.txt")
 
     # Root — self-signed. Custom template widens pathLenConstraint to 5 so
     # the chain can accommodate Intermediate + Issuing beneath the Root.
+    # Encrypted at rest with the CA password (/etc/step-ca/secrets/password.txt).
     _run_step([
         "certificate", "create",
         "--template", str(_ROOT_CA_TEMPLATE),
-        "--no-password", "--insecure",
+        "--password-file", pw_file,
         "--not-after", _lifetime_flag(config.root_lifetime_days),
         "--force",
         config.root_cn,
@@ -122,7 +127,8 @@ def generate_chain(config) -> list[GeneratedArtifact]:
             "--template", str(_INTERMEDIATE_CA_TEMPLATE),
             "--ca", str(paths["root_cert"]),
             "--ca-key", str(paths["root_key"]),
-            "--no-password", "--insecure",
+            "--ca-password-file", pw_file,
+            "--password-file", pw_file,
             "--not-after", _lifetime_flag(config.intermediate_lifetime_days),
             "--force",
             config.intermediate_cn,
@@ -147,7 +153,8 @@ def generate_chain(config) -> list[GeneratedArtifact]:
             "--profile", "intermediate-ca",
             "--ca", str(signer_cert),
             "--ca-key", str(signer_key),
-            "--no-password", "--insecure",
+            "--ca-password-file", pw_file,
+            "--password-file", pw_file,
             "--not-after", _lifetime_flag(config.issuing_lifetime_days),
             "--force",
             config.issuing_cn,
@@ -169,6 +176,59 @@ def _chmod_key(path: Path) -> None:
         os.chmod(path, 0o640)
     except OSError as e:
         log.warning("Could not chmod %s: %s", path, e)
+
+
+# ---------------------------------------------------------------------------
+# Migration: wrap existing unencrypted CA keys with the CA password
+# ---------------------------------------------------------------------------
+#
+# Early slice-2A commits generated CA keys with --no-password --insecure. That
+# is an at-rest security fail: anyone who lifts root_ca_key off disk owns the
+# CA. update.sh now runs `manage.py encrypt_ca_keys` which calls the function
+# below to re-wrap any plaintext keys in place with the node's CA password,
+# matching the shape fresh installs generate.
+
+
+def encrypt_existing_unencrypted_keys() -> list[tuple[str, str]]:
+    """Find every CA key on disk; if it loads as plaintext, re-encrypt it
+    in place with the node's CA password. Returns a list of
+    (tier, action) tuples so the caller can report what moved."""
+    from cryptography.hazmat.primitives import serialization
+
+    pw = password_file.ensure().encode("utf-8")
+    results: list[tuple[str, str]] = []
+    paths = _paths()
+    for tier, key_path in (
+        ("root", paths["root_key"]),
+        ("intermediate", paths["int_key"]),
+        ("issuing", paths["iss_key"]),
+    ):
+        if not key_path.is_file():
+            continue
+        data = key_path.read_bytes()
+        try:
+            key = serialization.load_pem_private_key(data, password=None)
+        except TypeError:
+            # load raised because the key is already password-protected.
+            results.append((tier, "already-encrypted"))
+            continue
+        except ValueError as e:
+            log.warning("Could not parse %s: %s", key_path, e)
+            results.append((tier, f"parse-error: {e}"))
+            continue
+
+        encrypted = key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.BestAvailableEncryption(pw),
+        )
+        # Atomic replace so a crash mid-write can't leave half a key.
+        tmp = key_path.with_suffix(".enc.new")
+        tmp.write_bytes(encrypted)
+        os.chmod(tmp, 0o640)
+        tmp.replace(key_path)
+        results.append((tier, "encrypted"))
+    return results
 
 
 # ---------------------------------------------------------------------------
@@ -233,6 +293,11 @@ def generate_webui_cert(config) -> GeneratedArtifact:
         )
 
     signer_cert, signer_key = _webui_signer(config)
+    # nginx needs the Web UI key *unencrypted* — it reads it on reload and
+    # there's no ssl_password_file in play. Only the leaf key is plaintext;
+    # the signer (CA) key stays encrypted and step-cli gets the passphrase
+    # via --ca-password-file.
+    pw_file = str(Path(settings.STEP_CA_CONFIG_DIR) / "secrets" / "password.txt")
 
     # step writes leaf + key into scratch files we concatenate into the
     # final nginx cert next.
@@ -245,6 +310,7 @@ def generate_webui_cert(config) -> GeneratedArtifact:
         "--profile", "leaf",
         "--ca", str(signer_cert),
         "--ca-key", str(signer_key),
+        "--ca-password-file", pw_file,
         "--no-password", "--insecure",
         "--not-after", _lifetime_flag(config.webui_lifetime_days),
         "--force",

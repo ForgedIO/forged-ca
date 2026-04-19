@@ -77,6 +77,18 @@ sudo -u "${APP_USER}" bash -c "cd ${APP_HOME} && \
     DJANGO_SETTINGS_MODULE=forgedca.settings.production \
     ${PYTHON} manage.py migrate --noinput"
 
+# ---------------------------------------------------------------------------
+# Re-encrypt any plaintext CA keys left over from early slice 2A
+#
+# Idempotent: a no-op on boxes whose keys are already password-protected.
+# Must run as APP_USER because the key files live in /etc/step-ca/ (owned by
+# step-ca:step-ca) with mode 0640 and SGID — forgedca writes through group.
+# ---------------------------------------------------------------------------
+echo "==> Ensuring CA signing keys are encrypted at rest..."
+sudo -u "${APP_USER}" bash -c "cd ${APP_HOME} && \
+    DJANGO_SETTINGS_MODULE=forgedca.settings.production \
+    ${PYTHON} manage.py encrypt_ca_keys"
+
 if ! command -v npm &>/dev/null; then
     echo "    ERROR: npm not found on PATH." >&2
     exit 1
@@ -167,11 +179,37 @@ ${APP_USER} ALL=(ALL) NOPASSWD: /bin/journalctl -u step-ca --no-pager -n 30 --ou
 ${APP_USER} ALL=(ALL) NOPASSWD: /usr/bin/journalctl -u step-ca --no-pager -n 30 --output=short-iso
 EOF
 
+# ---------------------------------------------------------------------------
+# Mirror the CA passphrase into the Django .env as FORGEDCA_CA_PASSWORD
+#
+# step-ca reads the passphrase from /etc/step-ca/secrets/password.txt
+# directly. Django code can read the same file via apps.ca.password_file,
+# but an env-var mirror is cheaper to access from management commands and
+# matches the service-account + env-var pattern an auditor expects. Only
+# written when missing — never overwrites an existing value.
+# ---------------------------------------------------------------------------
+CA_PW_FILE="/etc/step-ca/secrets/password.txt"
+ENV_FILE="${APP_HOME}/.env"
+if [[ -f "${CA_PW_FILE}" && -f "${ENV_FILE}" ]]; then
+    if ! grep -q "^FORGEDCA_CA_PASSWORD=" "${ENV_FILE}"; then
+        CA_PW_VAL="$(cat "${CA_PW_FILE}")"
+        {
+            echo ""
+            echo "# CA signing-key passphrase — mirror of /etc/step-ca/secrets/password.txt"
+            echo "FORGEDCA_CA_PASSWORD=${CA_PW_VAL}"
+        } >> "${ENV_FILE}"
+        chmod 600 "${ENV_FILE}"
+        chown "${APP_USER}:${APP_USER}" "${ENV_FILE}"
+        echo "==> Mirrored CA passphrase into ${ENV_FILE}"
+    fi
+fi
+
 echo "==> Restarting services..."
 systemctl restart forgedca-gunicorn forgedca-celery
-# step-ca only restarts if it was already running
+# step-ca needs a full restart to pick up the new --password-file arg.
+# Reload (SIGHUP) only rereads ca.json, not the ExecStart flags.
 if systemctl is-active step-ca &>/dev/null; then
-    systemctl reload step-ca 2>/dev/null || systemctl restart step-ca
+    systemctl restart step-ca
 fi
 
 echo ""
