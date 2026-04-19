@@ -134,10 +134,13 @@
         </div>
     </form>
 
-    <div class="alert alert-info">
-        <div>
-            <strong>Coming in slice 2C (next).</strong>
-            <div class="text-sm opacity-80 mt-1">Client Onboarding page &mdash; tabbed copy-paste blocks for <code class="font-mono">step ca bootstrap</code>, <code class="font-mono">certbot</code>, <code class="font-mono">acme.sh</code>, cert-manager, Traefik, Caddy, and nginx.</div>
+    <div class="card bg-base-100 shadow">
+        <div class="card-body sm:flex sm:items-center sm:justify-between gap-4">
+            <div>
+                <h2 class="card-title">Client onboarding</h2>
+                <p class="text-sm opacity-70 mt-0">Copy-paste enrolment snippets for <code class="font-mono">step</code>, <code class="font-mono">certbot</code>, <code class="font-mono">acme.sh</code>, cert-manager, Traefik, Caddy, and nginx &mdash; with your directory URL and Root fingerprint pre-filled. Share the link with a dev team to enrol a service against this CA in under a minute.</p>
+            </div>
+            <a href="{% url 'acme:onboarding' %}" class="btn btn-primary sm:ml-auto">Open onboarding page</a>
         </div>
     </div>
 

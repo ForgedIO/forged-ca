@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+{% block title %}Client onboarding &mdash; ACME &mdash; ForgedCA{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <div class="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+            <h1 class="text-2xl font-bold">ACME client onboarding</h1>
+            <p class="text-sm opacity-70 mt-1">Everything a client needs to enrol against this CA &mdash; copy-paste, substitute your hostname, done. Provisioner: <code class="font-mono">{{ provisioner.name }}</code>.</p>
+        </div>
+        <a href="{% url 'acme:index' %}" class="btn btn-sm btn-primary">Provisioner settings</a>
+    </div>
+
+    {% if not config.is_issuing %}
+        <div class="alert alert-warning">
+            <span>This node doesn't run an Issuing CA. Client onboarding only makes sense on a node that serves ACME.</span>
+        </div>
+    {% else %}
+
+    {% if not step_ca.active %}
+        <div class="alert alert-error">
+            <div class="flex-1"><strong>step-ca isn't running.</strong> Clients will fail with connection refused until it's started.</div>
+            <form method="post" action="{% url 'ca:daemon_action' 'start' %}" class="inline">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.path }}">
+                <button type="submit" class="btn btn-sm btn-primary">Start step-ca</button>
+            </form>
+        </div>
+    {% endif %}
+
+    {# ── Identity block: the three values every client needs ─────────────── #}
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h2 class="card-title">What every client needs</h2>
+            <p class="text-sm opacity-70 mt-0">Regardless of which ACME client you're using, these three values are the common inputs. Copy them once and reuse.</p>
+
+            <div class="grid gap-3 mt-4">
+                <div>
+                    <div class="text-xs opacity-60 uppercase tracking-wider">ACME directory URL</div>
+                    <div class="flex items-center gap-2 mt-1">
+                        <code class="font-mono text-sm bg-base-200 px-3 py-2 rounded flex-1 break-all" id="val-directory">{{ directory_url }}</code>
+                        <button type="button" class="btn btn-sm btn-primary" data-copy-target="val-directory">Copy</button>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="text-xs opacity-60 uppercase tracking-wider">Root CA SHA-256 fingerprint</div>
+                    <div class="flex items-center gap-2 mt-1">
+                        <code class="font-mono text-sm bg-base-200 px-3 py-2 rounded flex-1 break-all" id="val-fingerprint">{{ root_fingerprint|default:"(Root cert not found on disk)" }}</code>
+                        {% if root_fingerprint %}<button type="button" class="btn btn-sm btn-primary" data-copy-target="val-fingerprint">Copy</button>{% endif %}
+                    </div>
+                    <div class="text-xs opacity-60 mt-1">Used by <code class="font-mono">step ca bootstrap</code> to pin trust on first contact. Other clients just need the Root PEM installed.</div>
+                </div>
+
+                <div>
+                    <div class="text-xs opacity-60 uppercase tracking-wider">Root CA download</div>
+                    <div class="flex items-center gap-2 mt-1">
+                        <code class="font-mono text-sm bg-base-200 px-3 py-2 rounded flex-1 break-all" id="val-root-url">{{ root_download_url }}</code>
+                        <button type="button" class="btn btn-sm btn-primary" data-copy-target="val-root-url">Copy</button>
+                        <a href="{% url 'trust:root_crt' %}" class="btn btn-sm btn-primary">Download</a>
+                    </div>
+                    <div class="text-xs opacity-60 mt-1">Install this on the client so it trusts the CA's signature (or use the OS-level install instructions on the <a class="link" href="{% url 'trust:index' %}">Trust</a> page).</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ── Quick reachability check ───────────────────────────────────────── #}
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h2 class="card-title">Quick reachability test</h2>
+            <p class="text-sm opacity-70 mt-0">Paste this on any box that should be able to reach the CA. It bypasses trust verification (<code class="font-mono">-k</code>) on purpose &mdash; we're testing connectivity, not trust. A JSON directory back means step-ca is alive and the provisioner is visible.</p>
+            <div class="mt-3">
+                <pre class="bg-neutral text-neutral-content p-3 rounded text-xs overflow-auto font-mono" id="cmd-curl">curl -sk {{ directory_url }} | jq .</pre>
+                <div class="mt-2 flex gap-2">
+                    <button type="button" class="btn btn-sm btn-primary" data-copy-target="cmd-curl">Copy command</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ── Per-client tabs. Pure-CSS tabs via radio inputs — no JS needed. ── #}
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h2 class="card-title">Client snippets</h2>
+            <p class="text-sm opacity-70 mt-0">Pick your client. Each snippet has the directory URL and fingerprint pre-filled &mdash; just replace <code class="font-mono">{{ sample_host }}</code> with the DNS name you're enrolling.</p>
+
+            <div role="tablist" class="tabs tabs-lifted mt-4">
+                {# ── step CLI ── #}
+                <input type="radio" name="ob-tab" role="tab" class="tab" aria-label="step CLI" checked>
+                <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-box p-4">
+                    <p class="text-sm opacity-80">Smallstep's own client. Pins the Root fingerprint out-of-band so you don't have to pre-install the Root.</p>
+                    <div class="mt-3 space-y-2">
+                        <pre class="bg-neutral text-neutral-content p-3 rounded text-xs overflow-auto font-mono" id="snip-step">step ca bootstrap \
+  --ca-url {{ ca_url }} \
+  --fingerprint {{ root_fingerprint }}
+
+step ca certificate {{ sample_host }} {{ sample_host }}.crt {{ sample_host }}.key \
+  --provisioner {{ provisioner.name }} \
+  --san {{ sample_host }}</pre>
+                        <button type="button" class="btn btn-sm btn-primary" data-copy-target="snip-step">Copy</button>
+                    </div>
+                </div>
+
+                {# ── certbot ── #}
+                <input type="radio" name="ob-tab" role="tab" class="tab" aria-label="certbot">
+                <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-box p-4">
+                    <p class="text-sm opacity-80">Install the Root in the system trust store first so certbot trusts the CA (<a class="link" href="{% url 'trust:index' %}">instructions here</a>).</p>
+                    <div class="mt-3 space-y-2">
+                        <pre class="bg-neutral text-neutral-content p-3 rounded text-xs overflow-auto font-mono" id="snip-certbot">sudo certbot certonly \
+  --server {{ directory_url }} \
+  --standalone \
+  -d {{ sample_host }} \
+  --email admin@{{ ca_host }} \
+  --agree-tos --no-eff-email
+
+# Certs land at /etc/letsencrypt/live/{{ sample_host }}/</pre>
+                        <button type="button" class="btn btn-sm btn-primary" data-copy-target="snip-certbot">Copy</button>
+                    </div>
+                </div>
+
+                {# ── acme.sh ── #}
+                <input type="radio" name="ob-tab" role="tab" class="tab" aria-label="acme.sh">
+                <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-box p-4">
+                    <p class="text-sm opacity-80">Shell-only. Good for appliances and lightweight boxes without Python.</p>
+                    <div class="mt-3 space-y-2">
+                        <pre class="bg-neutral text-neutral-content p-3 rounded text-xs overflow-auto font-mono" id="snip-acmesh">export CA_BUNDLE={{ root_download_url }}
+
+acme.sh --issue \
+  --server {{ directory_url }} \
+  --ca-bundle "$CA_BUNDLE" \
+  --standalone \
+  -d {{ sample_host }}</pre>
+                        <button type="button" class="btn btn-sm btn-primary" data-copy-target="snip-acmesh">Copy</button>
+                    </div>
+                </div>
+
+                {# ── cert-manager (Kubernetes) ── #}
+                <input type="radio" name="ob-tab" role="tab" class="tab" aria-label="cert-manager (K8s)">
+                <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-box p-4">
+                    <p class="text-sm opacity-80">Apply the ClusterIssuer, then on any Ingress annotate <code class="font-mono">cert-manager.io/cluster-issuer: forgedca</code>. Install the Root into the cluster's trust bundle (ConfigMap <code class="font-mono">trusted-ca-bundle</code>) so pods validating the ACME endpoint succeed.</p>
+                    <div class="mt-3 space-y-2">
+                        <pre class="bg-neutral text-neutral-content p-3 rounded text-xs overflow-auto font-mono" id="snip-certmanager">apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: forgedca
+spec:
+  acme:
+    server: {{ directory_url }}
+    email: admin@{{ ca_host }}
+    privateKeySecretRef:
+      name: forgedca-acme-account
+    solvers:
+      - http01:
+          ingress:
+            class: nginx</pre>
+                        <button type="button" class="btn btn-sm btn-primary" data-copy-target="snip-certmanager">Copy</button>
+                    </div>
+                </div>
+
+                {# ── Traefik v3 ── #}
+                <input type="radio" name="ob-tab" role="tab" class="tab" aria-label="Traefik">
+                <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-box p-4">
+                    <p class="text-sm opacity-80">Static config. Traefik needs to trust the Root &mdash; mount it into the container at <code class="font-mono">/etc/ssl/certs/forgedca-root.crt</code> or put it in the host trust store.</p>
+                    <div class="mt-3 space-y-2">
+                        <pre class="bg-neutral text-neutral-content p-3 rounded text-xs overflow-auto font-mono" id="snip-traefik">certificatesResolvers:
+  forgedca:
+    acme:
+      email: admin@{{ ca_host }}
+      caServer: {{ directory_url }}
+      storage: /letsencrypt/acme.json
+      httpChallenge:
+        entryPoint: web</pre>
+                        <button type="button" class="btn btn-sm btn-primary" data-copy-target="snip-traefik">Copy</button>
+                    </div>
+                </div>
+
+                {# ── Caddy ── #}
+                <input type="radio" name="ob-tab" role="tab" class="tab" aria-label="Caddy">
+                <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-box p-4">
+                    <p class="text-sm opacity-80">Global options in the Caddyfile. <code class="font-mono">acme_ca_root</code> points at the downloaded Root so Caddy trusts the CA directly without depending on system trust.</p>
+                    <div class="mt-3 space-y-2">
+                        <pre class="bg-neutral text-neutral-content p-3 rounded text-xs overflow-auto font-mono" id="snip-caddy">{
+    acme_ca {{ directory_url }}
+    acme_ca_root /etc/ssl/certs/forgedca-root.crt
+    email admin@{{ ca_host }}
+}
+
+{{ sample_host }} {
+    reverse_proxy localhost:8080
+}</pre>
+                        <button type="button" class="btn btn-sm btn-primary" data-copy-target="snip-caddy">Copy</button>
+                    </div>
+                </div>
+
+                {# ── nginx via certbot --nginx ── #}
+                <input type="radio" name="ob-tab" role="tab" class="tab" aria-label="nginx">
+                <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-box p-4">
+                    <p class="text-sm opacity-80">certbot's nginx plugin rewrites your vhost in-place. Install the Root in the system trust store first.</p>
+                    <div class="mt-3 space-y-2">
+                        <pre class="bg-neutral text-neutral-content p-3 rounded text-xs overflow-auto font-mono" id="snip-nginx">sudo certbot --nginx \
+  --server {{ directory_url }} \
+  -d {{ sample_host }} \
+  --email admin@{{ ca_host }} \
+  --agree-tos --no-eff-email</pre>
+                        <button type="button" class="btn btn-sm btn-primary" data-copy-target="snip-nginx">Copy</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ── Renewal tips ────────────────────────────────────────────────── #}
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h2 class="card-title text-base">Renewal</h2>
+            <p class="text-sm opacity-70 mt-0">Default leaves are <strong>{% widthratio provisioner.default_leaf_lifetime_hours 24 1 %} days</strong>. Good ACME clients auto-renew at ⅓ remaining lifetime, so you almost never touch these commands again. On a Linux host with certbot or acme.sh, the package ships a renew timer; on Kubernetes, cert-manager handles it; on Caddy and Traefik it's built in. <code class="font-mono">step ca renew</code> is one-shot &mdash; run it from a cron / systemd timer.</p>
+        </div>
+    </div>
+
+    {% endif %}
+</div>
+
+<script>
+  (function () {
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-copy-target]');
+      if (!btn) return;
+      var target = document.getElementById(btn.dataset.copyTarget);
+      if (!target) return;
+      var text = (target.innerText || target.textContent || '').trim();
+      if (!text) return;
+      navigator.clipboard.writeText(text).then(function () {
+        var orig = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(function () { btn.textContent = orig; }, 1200);
+      });
+    });
+  })();
+</script>
+{% endblock %}
