@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}{% if mode == "create" %}New template{% else %}Edit template{% endif %} &mdash; ForgedCA{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl space-y-4">
+    <div>
+        <a href="{% url 'templates_app:index' %}" class="text-sm opacity-70 link">&larr; Back to templates</a>
+        <h1 class="text-2xl font-bold mt-1">{% if mode == "create" %}New template{% else %}Edit {{ obj.name }}{% endif %}</h1>
+    </div>
+
+    <form method="post" class="card bg-base-100 shadow">
+        {% csrf_token %}
+        <div class="card-body space-y-4">
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-error"><span>{{ form.non_field_errors }}</span></div>
+            {% endif %}
+
+            <div>
+                <label class="label"><span class="label-text font-medium">Name</span></label>
+                {{ form.name }}
+                <p class="text-xs opacity-60 mt-1">{{ form.name.help_text }}</p>
+                {% if form.name.errors %}<p class="text-error text-xs mt-1">{{ form.name.errors|join:" " }}</p>{% endif %}
+            </div>
+
+            <div>
+                <label class="label"><span class="label-text font-medium">Slug</span></label>
+                {{ form.slug }}
+                <p class="text-xs opacity-60 mt-1">{{ form.slug.help_text }}</p>
+                {% if form.slug.errors %}<p class="text-error text-xs mt-1">{{ form.slug.errors|join:" " }}</p>{% endif %}
+            </div>
+
+            <div>
+                <label class="label"><span class="label-text font-medium">Description</span></label>
+                {{ form.description }}
+                <p class="text-xs opacity-60 mt-1">{{ form.description.help_text }}</p>
+            </div>
+
+            <div class="grid gap-4 sm:grid-cols-3">
+                <div>
+                    <label class="label"><span class="label-text font-medium">Default lifetime (days)</span></label>
+                    {{ form.default_lifetime_days }}
+                    <p class="text-xs opacity-60 mt-1">Used when the client doesn't request a duration.</p>
+                </div>
+                <div>
+                    <label class="label"><span class="label-text font-medium">Minimum lifetime (days)</span></label>
+                    {{ form.min_lifetime_days }}
+                    <p class="text-xs opacity-60 mt-1">Floor the CA will accept.</p>
+                </div>
+                <div>
+                    <label class="label"><span class="label-text font-medium">Maximum lifetime (days)</span></label>
+                    {{ form.max_lifetime_days }}
+                    <p class="text-xs opacity-60 mt-1">Ceiling — clients asking for more get capped.</p>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2">
+                <a href="{% url 'templates_app:index' %}" class="btn btn-ghost">Cancel</a>
+                <button type="submit" class="btn btn-primary">{% if mode == "create" %}Create template{% else %}Save and reload step-ca{% endif %}</button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

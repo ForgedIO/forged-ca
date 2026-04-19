@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Delete {{ obj.name }} &mdash; ForgedCA{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl space-y-4">
+    <div>
+        <a href="{% url 'templates_app:index' %}" class="text-sm opacity-70 link">&larr; Back to templates</a>
+        <h1 class="text-2xl font-bold mt-1">Delete template</h1>
+    </div>
+
+    <div class="card bg-base-100 shadow border-l-4 border-error">
+        <div class="card-body">
+            <p>Are you sure you want to delete <strong>{{ obj.name }}</strong> (<code class="font-mono text-xs">{{ obj.slug }}</code>)?</p>
+            {% if in_use_by %}
+                <div class="alert alert-error mt-3">
+                    <span>Template is in use by: <strong>{{ in_use_by|join:", " }}</strong>. Rebind the provisioner first.</span>
+                </div>
+            {% endif %}
+            <form method="post" class="mt-4 flex justify-end gap-2">
+                {% csrf_token %}
+                <a href="{% url 'templates_app:index' %}" class="btn btn-ghost">Cancel</a>
+                <button type="submit" class="btn btn-error" {% if in_use_by %}disabled{% endif %}>Delete</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

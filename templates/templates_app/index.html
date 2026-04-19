@@ -3,21 +3,60 @@
 
 {% block content %}
 <div class="space-y-6">
-    <div>
-        <h1 class="text-2xl font-bold">Templates</h1>
-        <p class="text-sm opacity-70 mt-1">Reusable certificate templates &mdash; allowed EKUs, key usage, validity bounds, name constraints. Bound to ACME provisioners or used for non-ACME CSR signing.</p>
+    <div class="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+            <h1 class="text-2xl font-bold">Certificate templates</h1>
+            <p class="text-sm opacity-70 mt-1">Policy bundles every provisioner binds to — lifetime today, EKU / key-type / name constraints in a later slice. Change a template here and every ACME provisioner sharing it picks up the new policy the next time step-ca reloads.</p>
+        </div>
+        <a href="{% url 'templates_app:new' %}" class="btn btn-primary">New template</a>
+    </div>
+
+    <div class="card bg-base-100 shadow">
+        <div class="card-body p-0">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Slug</th>
+                        <th>Default</th>
+                        <th>Min</th>
+                        <th>Max</th>
+                        <th class="w-px"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in templates %}
+                    <tr>
+                        <td>
+                            <div class="font-medium">
+                                {{ t.name }}
+                                {% if t.is_system %}<span class="badge badge-sm ml-1">system</span>{% endif %}
+                            </div>
+                            {% if t.description %}<div class="text-xs opacity-70 mt-1">{{ t.description }}</div>{% endif %}
+                        </td>
+                        <td><code class="font-mono text-xs">{{ t.slug }}</code></td>
+                        <td>{{ t.default_lifetime_days }}d</td>
+                        <td>{{ t.min_lifetime_days }}d</td>
+                        <td>{{ t.max_lifetime_days }}d</td>
+                        <td class="whitespace-nowrap">
+                            <div class="flex gap-2 justify-end">
+                                <a href="{% url 'templates_app:edit' t.pk %}" class="btn btn-xs btn-primary">Edit</a>
+                                {% if not t.is_system %}
+                                    <a href="{% url 'templates_app:delete' t.pk %}" class="btn btn-xs btn-error">Delete</a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <div class="alert alert-info">
         <div>
-            <strong>Slice 3 lights this up.</strong>
-            <ul class="list-disc pl-6 mt-2 text-sm space-y-0.5">
-                <li>CRUD UI for templates &mdash; name, key-type allowlist, validity range, EKU set, key usage, SAN name-constraints</li>
-                <li>Default "Web Server (Server + optional Client Auth)" template that ships out-of-the-box</li>
-                <li>ACME provisioners bind to a template (EKU intersection logic: CSR requested EKUs &cap; template-allowed EKUs + forced-always)</li>
-                <li>Non-ACME signing UI picks a compatible template from the list, or admin opts into "Passthrough (advanced)"</li>
-                <li>Federation (slice 13): templates created on Issuing push up to their parent Intermediate; siblings inherit</li>
-            </ul>
+            <strong>Slice 3 scope.</strong>
+            <div class="text-sm opacity-80 mt-1">Lifetime policy only in this slice. EKU (serverAuth / clientAuth / codeSigning), key-type + min-size allowlists, subject DN policy, and SAN name-constraints ship in a later slice. The seeded Web Server template ships with server + client auth EKUs and a 49-day default lifetime — what most admins want for internal ACME-issued leaves.</div>
         </div>
     </div>
 </div>

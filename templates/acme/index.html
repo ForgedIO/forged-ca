@@ -22,14 +22,18 @@
                 <code class="font-mono text-sm bg-base-200 px-3 py-2 rounded flex-1 break-all">{{ directory_url }}</code>
                 <button type="button" class="btn btn-sm btn-primary" onclick="navigator.clipboard.writeText('{{ directory_url }}')">Copy</button>
             </div>
-            <div class="grid gap-3 sm:grid-cols-3 mt-4 text-sm">
+            <div class="grid gap-3 sm:grid-cols-4 mt-4 text-sm">
                 <div>
                     <div class="opacity-60 text-xs">Provisioner</div>
                     <div class="font-medium">{{ provisioner.name }}{% if not provisioner.enabled %} <span class="badge badge-warning badge-sm">disabled</span>{% endif %}</div>
                 </div>
                 <div>
+                    <div class="opacity-60 text-xs">Template</div>
+                    <div class="font-medium"><a class="link" href="{% url 'templates_app:edit' provisioner.effective_template.pk %}">{{ provisioner.effective_template.name }}</a></div>
+                </div>
+                <div>
                     <div class="opacity-60 text-xs">Default lifetime</div>
-                    <div class="font-medium">{{ provisioner.default_leaf_lifetime_hours }}h <span class="opacity-60">({% widthratio provisioner.default_leaf_lifetime_hours 24 1 %} days)</span></div>
+                    <div class="font-medium">{{ provisioner.effective_template.default_lifetime_days }}d <span class="opacity-60">({{ provisioner.effective_template.default_lifetime_hours }}h)</span></div>
                 </div>
                 <div>
                     <div class="opacity-60 text-xs">step-ca daemon</div>
@@ -97,19 +101,10 @@
                     </div>
                 </div>
 
-                <div class="grid gap-4 sm:grid-cols-2 mt-4">
-                    <div>
-                        <label class="label"><span class="label-text font-medium">{{ form.default_lifetime_days.label }}</span></label>
-                        <input type="number" name="default_lifetime_days" value="{{ form.default_lifetime_days.value|default:'' }}" class="input input-bordered w-full" min="1" max="825">
-                        <p class="text-xs opacity-60 mt-1">{{ form.default_lifetime_days.help_text }}</p>
-                        {% if form.default_lifetime_days.errors %}<p class="text-error text-xs mt-1">{{ form.default_lifetime_days.errors|join:" " }}</p>{% endif %}
-                    </div>
-                    <div>
-                        <label class="label"><span class="label-text font-medium">{{ form.max_lifetime_days.label }}</span></label>
-                        <input type="number" name="max_lifetime_days" value="{{ form.max_lifetime_days.value|default:'' }}" class="input input-bordered w-full" min="1" max="825">
-                        <p class="text-xs opacity-60 mt-1">{{ form.max_lifetime_days.help_text }}</p>
-                        {% if form.max_lifetime_days.errors %}<p class="text-error text-xs mt-1">{{ form.max_lifetime_days.errors|join:" " }}</p>{% endif %}
-                    </div>
+                <div class="mt-4">
+                    <label class="label"><span class="label-text font-medium">{{ form.template.label }}</span></label>
+                    {{ form.template }}
+                    <p class="text-xs opacity-60 mt-1">Lifetime policy comes from the selected template. Edit or create templates on the <a class="link" href="{% url 'templates_app:index' %}">Templates</a> page.</p>
                 </div>
 
                 <div class="mt-4">

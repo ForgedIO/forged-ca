@@ -5,10 +5,14 @@ class ACMEProvisioner(models.Model):
     """Singleton row holding this node's ACME provisioner settings.
 
     step-ca supports multiple ACME provisioners (one per bound cert template)
-    and that's the shape slice 3 grows into. Slice 2B keeps it to one — a
-    single "default" provisioner with the admin-tunable lifetime and
-    challenge set — so the single-server end-to-end ACME loop is operable
-    before the template-CRUD machinery lands.
+    and that's the shape later slices grow into. Slice 2B/3 keep it to one —
+    a single "default" provisioner bound to the default template — so the
+    single-server end-to-end ACME loop is operable before the provisioner-
+    multiplexing UX lands.
+
+    Lifetime policy lives on the bound CertTemplate (slice 3), not on this
+    row. That way the admin changes lifetime in one place and it propagates
+    to every provisioner sharing the template.
     """
     SINGLETON_ID = 1
 
@@ -26,17 +30,15 @@ class ACMEProvisioner(models.Model):
                   "lock down issuance temporarily.",
     )
 
-    # Defaults match CA/Browser Forum's 2029 public-cert ceiling (47 days). We
-    # round up to 49 to give clients a margin on the renewal cron; ACME
-    # clients typically renew at ⅓ remaining lifetime, so 49d → first renewal
-    # attempt around day 33. Admin can tighten for dev, loosen for appliances.
-    default_leaf_lifetime_hours = models.PositiveIntegerField(
-        default=49 * 24,
-        help_text="Lifetime issued when the client doesn't request a specific "
-                  "duration. 49 days matches the 2029 public-web ceiling.",
+    template = models.ForeignKey(
+        "templates_app.CertTemplate",
+        on_delete=models.PROTECT,
+        related_name="acme_provisioners",
+        null=True, blank=True,
+        help_text="Cert template whose lifetime + policy applies to leaves "
+                  "issued via this provisioner. Defaults to the seeded "
+                  "Web Server template if unset.",
     )
-    min_leaf_lifetime_hours = models.PositiveIntegerField(default=1)
-    max_leaf_lifetime_hours = models.PositiveIntegerField(default=365 * 24)
 
     # HTTP-01 is the baseline — every ACME client supports it, no plugin.
     # tls-alpn-01 is a nice-to-have for clients that can't open port 80
@@ -70,7 +72,11 @@ class ACMEProvisioner(models.Model):
 
     @classmethod
     def load(cls) -> "ACMEProvisioner":
+        from apps.templates_app.models import CertTemplate
         obj, _ = cls.objects.get_or_create(pk=cls.SINGLETON_ID)
+        if obj.template_id is None:
+            obj.template = CertTemplate.load_default()
+            obj.save(update_fields=["template"])
         return obj
 
     def save(self, *args, **kwargs):
@@ -85,16 +91,22 @@ class ACMEProvisioner(models.Model):
         # Never render an empty challenge list — step-ca rejects the provisioner.
         return chals or ["http-01"]
 
+    def effective_template(self):
+        """Bound template or the seeded default — never None."""
+        from apps.templates_app.models import CertTemplate
+        return self.template or CertTemplate.load_default()
+
     def to_ca_json(self) -> dict:
         """Serialise for step-ca's authority.provisioners[] array."""
+        t = self.effective_template()
         return {
             "type": "ACME",
             "name": self.name,
             "forceCN": False,
             "claims": {
-                "defaultTLSCertDuration": f"{self.default_leaf_lifetime_hours}h",
-                "minTLSCertDuration":     f"{self.min_leaf_lifetime_hours}h",
-                "maxTLSCertDuration":     f"{self.max_leaf_lifetime_hours}h",
+                "defaultTLSCertDuration": f"{t.default_lifetime_hours}h",
+                "minTLSCertDuration":     f"{t.min_lifetime_hours}h",
+                "maxTLSCertDuration":     f"{t.max_lifetime_hours}h",
             },
             "challenges": self.active_challenges(),
         }
