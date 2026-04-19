@@ -13,10 +13,6 @@
 </head>
 <body class="min-h-screen bg-base-200">
 
-{# Chrome is split into an "opening" and "closing" half around a single
-   {% block content %}. Django only allows one {% block %} per name, so
-   the conditional wraps the surrounding HTML instead of duplicating the
-   block in each branch. #}
 {% if user.is_authenticated and node_config and node_config.is_configured %}
 <div class="drawer lg:drawer-open">
     <input id="forgedca-sidebar-toggle" type="checkbox" class="drawer-toggle">
