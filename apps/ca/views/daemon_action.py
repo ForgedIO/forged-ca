@@ -35,6 +35,11 @@ class DaemonActionView(LoginRequiredMixin, View):
         func, success_msg = ACTIONS[action]
         ok, stderr = func()
         if ok:
+            # systemctl start/restart return before step-ca has fully reached
+            # the active state. Give it a moment so the Settings page reflects
+            # the real state on first render instead of the transient one.
+            if action in {"start", "restart", "reload"}:
+                daemon.wait_until_settled()
             messages.success(request, success_msg)
         else:
             messages.error(

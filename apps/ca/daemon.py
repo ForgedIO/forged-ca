@@ -11,6 +11,7 @@ validations.
 """
 import shutil
 import subprocess
+import time
 from dataclasses import dataclass
 
 
@@ -87,3 +88,18 @@ def reload() -> tuple[bool, str]:
 def enable() -> tuple[bool, str]:
     r = _systemctl("enable", SERVICE, timeout=30)
     return (r.returncode == 0, (r.stderr or r.stdout).strip())
+
+
+def wait_until_settled(timeout: float = 3.0, interval: float = 0.2) -> DaemonStatus:
+    """Poll status() until the daemon reports a terminal state (active or
+    failed) or we hit `timeout`. systemctl start returns before step-ca has
+    fully transitioned, so redirecting straight to Settings often shows a
+    stale 'inactive' even when the service came up cleanly."""
+    deadline = time.monotonic() + timeout
+    s = status()
+    while time.monotonic() < deadline:
+        s = status()
+        if s.active or s.substate in {"failed", "not-found"}:
+            return s
+        time.sleep(interval)
+    return s

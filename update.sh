@@ -111,6 +111,60 @@ cp "${APP_HOME}/deploy/celery.service.template"   /etc/systemd/system/forgedca-c
 cp "${APP_HOME}/deploy/step-ca.service.template"  /etc/systemd/system/step-ca.service
 systemctl daemon-reload
 
+# ---------------------------------------------------------------------------
+# Refresh sudoers drop-ins
+#
+# Slice 2A widened the step-ca sudoers grant (added enable/disable/is-active/
+# is-enabled). Any box whose install.sh pre-dates that change needs the drop-in
+# rewritten. Writing via a temp file + visudo -c keeps a syntax error from
+# wiping sudo access; we only move it into place if it validates.
+# ---------------------------------------------------------------------------
+echo "==> Refreshing sudoers drop-ins..."
+refresh_sudoers() {
+    local name="$1"
+    local tmp="/etc/sudoers.d/.${name}.new"
+    cat > "${tmp}"
+    chmod 440 "${tmp}"
+    if visudo -cf "${tmp}" >/dev/null; then
+        mv "${tmp}" "/etc/sudoers.d/${name}"
+    else
+        rm -f "${tmp}"
+        echo "    ERROR: /etc/sudoers.d/${name} would have been invalid — left existing file alone." >&2
+        return 1
+    fi
+}
+
+NGINX_CONF_FILE="/etc/nginx/conf.d/forgedca.conf"
+[[ -f /etc/nginx/sites-available/forgedca ]] && NGINX_CONF_FILE="/etc/nginx/sites-available/forgedca"
+
+refresh_sudoers forgedca-nginx <<EOF
+${APP_USER} ALL=(ALL) NOPASSWD: /usr/sbin/nginx -s reload
+${APP_USER} ALL=(ALL) NOPASSWD: /usr/sbin/nginx -t
+${APP_USER} ALL=(ALL) NOPASSWD: /usr/bin/tee ${NGINX_CONF_FILE}
+${APP_USER} ALL=(ALL) NOPASSWD: /usr/bin/tee ${APP_HOME}/deploy/acme-challenge.conf
+EOF
+
+refresh_sudoers forgedca-stepca <<EOF
+${APP_USER} ALL=(ALL) NOPASSWD: /bin/systemctl start step-ca
+${APP_USER} ALL=(ALL) NOPASSWD: /bin/systemctl stop step-ca
+${APP_USER} ALL=(ALL) NOPASSWD: /bin/systemctl restart step-ca
+${APP_USER} ALL=(ALL) NOPASSWD: /bin/systemctl reload step-ca
+${APP_USER} ALL=(ALL) NOPASSWD: /bin/systemctl status step-ca
+${APP_USER} ALL=(ALL) NOPASSWD: /bin/systemctl enable step-ca
+${APP_USER} ALL=(ALL) NOPASSWD: /bin/systemctl disable step-ca
+${APP_USER} ALL=(ALL) NOPASSWD: /bin/systemctl is-active step-ca
+${APP_USER} ALL=(ALL) NOPASSWD: /bin/systemctl is-enabled step-ca
+${APP_USER} ALL=(ALL) NOPASSWD: /usr/bin/systemctl start step-ca
+${APP_USER} ALL=(ALL) NOPASSWD: /usr/bin/systemctl stop step-ca
+${APP_USER} ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart step-ca
+${APP_USER} ALL=(ALL) NOPASSWD: /usr/bin/systemctl reload step-ca
+${APP_USER} ALL=(ALL) NOPASSWD: /usr/bin/systemctl status step-ca
+${APP_USER} ALL=(ALL) NOPASSWD: /usr/bin/systemctl enable step-ca
+${APP_USER} ALL=(ALL) NOPASSWD: /usr/bin/systemctl disable step-ca
+${APP_USER} ALL=(ALL) NOPASSWD: /usr/bin/systemctl is-active step-ca
+${APP_USER} ALL=(ALL) NOPASSWD: /usr/bin/systemctl is-enabled step-ca
+EOF
+
 echo "==> Restarting services..."
 systemctl restart forgedca-gunicorn forgedca-celery
 # step-ca only restarts if it was already running

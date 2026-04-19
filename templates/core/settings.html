@@ -10,7 +10,7 @@
     </div>
 
     {% if step_ca %}
-    <div class="card bg-base-100 shadow {% if step_ca.active %}border-l-4 border-success{% elif step_ca.substate == 'failed' %}border-l-4 border-error{% else %}border-l-4 border-warning{% endif %}">
+    <div id="step-ca-card" class="card bg-base-100 shadow {% if step_ca.active %}border-l-4 border-success{% elif step_ca.substate == 'failed' %}border-l-4 border-error{% else %}border-l-4 border-warning{% endif %}">
         <div class="card-body">
             <h2 class="card-title">step-ca daemon</h2>
             {% if not step_ca.installed %}
@@ -19,11 +19,11 @@
                 <div class="stats stats-vertical sm:stats-horizontal shadow-sm mt-2">
                     <div class="stat">
                         <div class="stat-title">Status</div>
-                        <div class="stat-value text-base {% if step_ca.active %}text-success{% elif step_ca.substate == 'failed' %}text-error{% endif %}">{{ step_ca.substate|title }}</div>
+                        <div id="step-ca-status" class="stat-value text-base {% if step_ca.active %}text-success{% elif step_ca.substate == 'failed' %}text-error{% endif %}">{{ step_ca.substate|title }}</div>
                     </div>
                     <div class="stat">
                         <div class="stat-title">Start on boot</div>
-                        <div class="stat-value text-base">{% if step_ca.enabled %}Enabled{% else %}Disabled{% endif %}</div>
+                        <div id="step-ca-enabled" class="stat-value text-base">{% if step_ca.enabled %}Enabled{% else %}Disabled{% endif %}</div>
                     </div>
                     <div class="stat">
                         <div class="stat-title">Listen</div>
@@ -63,6 +63,38 @@
             {% endif %}
         </div>
     </div>
+    <script>
+      (function () {
+        var card = document.getElementById('step-ca-card');
+        if (!card) return;
+        var statusEl  = document.getElementById('step-ca-status');
+        var enabledEl = document.getElementById('step-ca-enabled');
+        var url = "{% url 'ca:daemon_status' %}";
+
+        function applyState(data) {
+          if (!data || !data.installed) return;
+          if (statusEl) {
+            statusEl.textContent = (data.substate || 'unknown')
+              .replace(/(^|\s)\w/g, function (c) { return c.toUpperCase(); });
+            statusEl.classList.toggle('text-success', !!data.active);
+            statusEl.classList.toggle('text-error',   data.substate === 'failed');
+          }
+          if (enabledEl) enabledEl.textContent = data.enabled ? 'Enabled' : 'Disabled';
+          card.classList.remove('border-success', 'border-warning', 'border-error');
+          if (data.active)                    card.classList.add('border-success');
+          else if (data.substate === 'failed') card.classList.add('border-error');
+          else                                 card.classList.add('border-warning');
+        }
+
+        function poll() {
+          fetch(url, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(applyState)
+            .catch(function () {});
+        }
+        setInterval(poll, 3000);
+      })();
+    </script>
     {% endif %}
 
     {# ── Web UI certificate ─────────────────────────────────────────── #}
