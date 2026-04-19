@@ -27,16 +27,189 @@
         max-width: 100%;
         height: auto;
     }
+
+    /* Smooth the theme swap so flipping light↔dark isn't jarring. Limited to
+       colour-ish properties so layout/opacity animations aren't dragged. */
+    html,
+    body,
+    .card,
+    .btn,
+    .alert,
+    .stats,
+    .stat,
+    .menu,
+    .drawer-side,
+    .navbar,
+    details,
+    summary,
+    pre,
+    code {
+        transition: background-color 150ms ease,
+                    border-color     150ms ease,
+                    color            150ms ease;
+    }
+
+    /* Native-input focus ring that reads in both themes. DaisyUI handles .btn,
+       this catches text inputs + textareas + summaries. */
+    :where(input, textarea, select, summary):focus-visible {
+        outline: 2px solid hsl(var(--p));
+        outline-offset: 2px;
+    }
 }
 
 @layer components {
-    /* Semantic icon-size classes. Prefer these over raw width/height utilities
-       in templates so size changes stay centralised and survive a missing
-       Tailwind scan for the file they're used in. */
+    /* ---------------------------------------------------------------------
+     * Icon sizing
+     *
+     * Prefer these semantic classes over raw width/height utilities in
+     * templates so size changes stay centralised and survive a missing
+     * Tailwind scan for the file they're used in.
+     * --------------------------------------------------------------------- */
     .icon-xs { width: 0.75rem; height: 0.75rem; }
     .icon-sm { width: 1rem;    height: 1rem;    }
     .icon    { width: 1.25rem; height: 1.25rem; }
     .icon-md { width: 1.5rem;  height: 1.5rem;  }
     .icon-lg { width: 2rem;    height: 2rem;    }
     .icon-xl { width: 2.5rem;  height: 2.5rem;  }
+
+    /* ---------------------------------------------------------------------
+     * Sidebar — pinned to the brand charcoal/bone palette
+     *
+     * We want the sidebar identical in light and dark mode: dark surface,
+     * bone text. Using DaisyUI's `bg-neutral` would flex slightly across
+     * themes; this class locks it to the brand values.
+     * --------------------------------------------------------------------- */
+    .sidebar-surface {
+        background-color: #1B1F26;   /* charcoal */
+        color: #EDE7DB;              /* bone */
+    }
+    .sidebar-surface .menu li > a,
+    .sidebar-surface .menu li > button {
+        color: #EDE7DB;
+        border-radius: 0.375rem;
+    }
+    .sidebar-surface .menu li > a:hover,
+    .sidebar-surface .menu li > button:hover {
+        background-color: rgba(255, 255, 255, 0.06);
+    }
+    .sidebar-surface .menu li > a.menu-active,
+    .sidebar-surface .menu li > a.active {
+        background-color: #6B89B8;   /* steel */
+        color: #FFFFFF;
+    }
+    .sidebar-surface .sidebar-divider {
+        border-color: rgba(237, 231, 219, 0.12);
+    }
+    .sidebar-surface .sidebar-muted {
+        color: rgba(237, 231, 219, 0.65);
+    }
+
+    /* ---------------------------------------------------------------------
+     * Buttons
+     *
+     * DaisyUI's btn-ghost is fully transparent until hover, which hides
+     * secondary actions (Download, Rotate, View) on a base-100 card. Give
+     * every ghost button a soft border + faint fill so they read as buttons
+     * at rest in BOTH themes. Primary buttons keep DaisyUI's steel fill.
+     *
+     * Sidebar ghost buttons are overridden above (sidebar-surface scope).
+     * --------------------------------------------------------------------- */
+    .btn.btn-ghost {
+        border: 1px solid hsl(var(--b3));
+        background-color: hsl(var(--b1) / 0.6);
+        color: hsl(var(--bc));
+    }
+    .btn.btn-ghost:hover {
+        background-color: hsl(var(--b2));
+        border-color: hsl(var(--b3));
+    }
+    /* Sidebar ghost buttons stay transparent against the charcoal surface;
+       selectors below re-assert that after the generic rule above. */
+    .sidebar-surface .btn.btn-ghost {
+        color: #EDE7DB;
+        border-color: transparent;
+        background-color: transparent;
+    }
+    .sidebar-surface .btn.btn-ghost:hover {
+        background-color: rgba(255, 255, 255, 0.08);
+        border-color: transparent;
+        color: #FFFFFF;
+    }
+
+    /* Outline / link-style action: still looks secondary, but clearly a
+       button at a glance. Use for low-emphasis CTAs. */
+    .btn-outline-steel {
+        border: 1px solid hsl(var(--p));
+        color: hsl(var(--p));
+        background-color: transparent;
+    }
+    .btn-outline-steel:hover {
+        background-color: hsl(var(--p));
+        color: hsl(var(--pc));
+    }
+
+    /* ---------------------------------------------------------------------
+     * Cards
+     *
+     * DaisyUI's default .card shadow is faint on the warm bone canvas; give
+     * every card a softer, theme-aware elevation and a 1px border that
+     * reads in dark mode.
+     * --------------------------------------------------------------------- */
+    .card {
+        border: 1px solid hsl(var(--b3) / 0.6);
+        box-shadow:
+            0 1px 2px rgba(0, 0, 0, 0.04),
+            0 4px 12px rgba(0, 0, 0, 0.04);
+    }
+    [data-theme="forgedca-dark"] .card {
+        box-shadow:
+            0 1px 2px rgba(0, 0, 0, 0.4),
+            0 4px 16px rgba(0, 0, 0, 0.25);
+    }
+
+    /* ---------------------------------------------------------------------
+     * Code / pre blocks
+     *
+     * Use a slightly more contrasty surface than the card body so copy
+     * boxes stand out in both themes.
+     * --------------------------------------------------------------------- */
+    pre {
+        border: 1px solid hsl(var(--b3) / 0.7);
+    }
+
+    /* Details/summary — make the clickable area feel like a button. */
+    details > summary {
+        list-style: none;
+    }
+    details > summary::-webkit-details-marker {
+        display: none;
+    }
+    details > summary:hover {
+        background-color: hsl(var(--b2));
+    }
+
+    /* ---------------------------------------------------------------------
+     * Theme toggle — the moon/sun swap happens via CSS so the button is
+     * stateless; only data-theme on <html> drives which icon is visible.
+     * --------------------------------------------------------------------- */
+    .theme-toggle .theme-toggle-sun  { display: none; }
+    .theme-toggle .theme-toggle-moon { display: inline-block; }
+    [data-theme="forgedca-dark"] .theme-toggle .theme-toggle-sun  { display: inline-block; }
+    [data-theme="forgedca-dark"] .theme-toggle .theme-toggle-moon { display: none; }
+
+    /* Brand wordmark — consistent across both layouts. */
+    .brand-wordmark {
+        font-weight: 700;
+        letter-spacing: -0.01em;
+    }
+    .brand-wordmark-accent {
+        color: hsl(var(--p));
+    }
+    .brand-tagline {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 9px;
+        letter-spacing: 0.25em;
+        opacity: 0.6;
+        text-transform: uppercase;
+    }
 }

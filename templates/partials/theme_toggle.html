@@ -1,0 +1,14 @@
+{% comment %}
+Icon-button that flips between forgedca-light and forgedca-dark.
+Both icons ship in the DOM; CSS in app.src.css shows the one that matches
+the current data-theme. Accepts an optional `extra` template var for extra
+classes (e.g. to tweak spacing in a specific container).
+{% endcomment %}
+<button type="button"
+        data-theme-toggle
+        aria-label="Toggle dark mode"
+        title="Toggle dark mode"
+        class="theme-toggle btn btn-ghost btn-sm btn-square {{ extra }}">
+    <svg class="icon-sm theme-toggle-moon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+    <svg class="icon-sm theme-toggle-sun" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+</button>
