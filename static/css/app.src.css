@@ -212,4 +212,42 @@
         opacity: 0.6;
         text-transform: uppercase;
     }
+
+    /* ---------------------------------------------------------------------
+     * Tabs (DaisyUI .tabs-lifted + radio-input pattern)
+     *
+     * Out of the box the tab labels are transparent on bone, so users can't
+     * see the tab strip at all on the ACME onboarding page. Give every tab
+     * a readable neutral fill at rest and the steel-blue primary fill when
+     * active — matching the primary buttons. Works for both <a class="tab">
+     * and <input type="radio" class="tab"> patterns; the radio case flips
+     * styles via :checked, the <a> case via .tab-active.
+     * --------------------------------------------------------------------- */
+    .tabs-lifted > .tab {
+        background-color: hsl(var(--b2));
+        color: hsl(var(--bc));
+        border: 1px solid hsl(var(--b3));
+        border-bottom: 0;
+        font-weight: 500;
+    }
+    .tabs-lifted > .tab:hover {
+        background-color: hsl(var(--b3));
+    }
+    .tabs-lifted > .tab:checked,
+    .tabs-lifted > .tab.tab-active,
+    .tabs-lifted > .tab[aria-selected="true"] {
+        background-color: hsl(var(--p));
+        color: hsl(var(--pc));
+        border-color: hsl(var(--p));
+    }
+    /* Radio inputs used as tabs don't render their label text by default —
+       DaisyUI reads aria-label. Make sure that label is visible and sized
+       like a normal tab label in both states. */
+    .tabs-lifted > input.tab[type="radio"] {
+        -webkit-appearance: none;
+        appearance: none;
+    }
+    .tabs-lifted > input.tab[type="radio"]::before {
+        content: attr(aria-label);
+    }
 }
