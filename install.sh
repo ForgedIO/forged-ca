@@ -430,6 +430,8 @@ ${APP_USER} ALL=(ALL) NOPASSWD: /usr/bin/systemctl enable step-ca
 ${APP_USER} ALL=(ALL) NOPASSWD: /usr/bin/systemctl disable step-ca
 ${APP_USER} ALL=(ALL) NOPASSWD: /usr/bin/systemctl is-active step-ca
 ${APP_USER} ALL=(ALL) NOPASSWD: /usr/bin/systemctl is-enabled step-ca
+${APP_USER} ALL=(ALL) NOPASSWD: /bin/journalctl -u step-ca --no-pager -n [0-9]* --output=short-iso
+${APP_USER} ALL=(ALL) NOPASSWD: /usr/bin/journalctl -u step-ca --no-pager -n [0-9]* --output=short-iso
 EOF
 chmod 440 /etc/sudoers.d/forgedca-stepca
 

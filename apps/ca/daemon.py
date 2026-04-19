@@ -17,6 +17,7 @@ from dataclasses import dataclass
 
 SERVICE = "step-ca"
 _SYSTEMCTL = shutil.which("systemctl") or "/usr/bin/systemctl"
+_JOURNALCTL = shutil.which("journalctl") or "/usr/bin/journalctl"
 
 
 @dataclass
@@ -88,6 +89,22 @@ def reload() -> tuple[bool, str]:
 def enable() -> tuple[bool, str]:
     r = _systemctl("enable", SERVICE, timeout=30)
     return (r.returncode == 0, (r.stderr or r.stdout).strip())
+
+
+def journal_tail(lines: int = 30) -> str:
+    """Return the last `lines` of journalctl -u step-ca, without following.
+    Surfaced on the Settings daemon card so the admin can see crash reasons
+    (missing password-file, bad ca.json path, port already in use, …) without
+    SSHing to the box."""
+    r = subprocess.run(
+        ["sudo", "-n", _JOURNALCTL, "-u", SERVICE,
+         "--no-pager", "-n", str(lines), "--output=short-iso"],
+        capture_output=True, text=True, timeout=5, check=False,
+    )
+    if r.returncode != 0:
+        err = (r.stderr or "").strip()
+        return f"(could not read journal: {err or 'unknown error'})"
+    return (r.stdout or "").strip() or "(journal empty)"
 
 
 def wait_until_settled(timeout: float = 3.0, interval: float = 0.2) -> DaemonStatus:
