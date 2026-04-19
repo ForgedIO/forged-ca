@@ -53,10 +53,45 @@
     </div>
 
     {% if config.is_issuing %}
-        <div class="alert alert-info">
-            <div>
-                <strong>step-ca daemon &mdash; coming in slice 2.</strong>
-                <div class="text-sm opacity-80 mt-1">The <code class="font-mono">ca.json</code> has been written to <code class="font-mono">/etc/step-ca/ca.json</code> but the daemon isn't running yet. ACME provisioner support, the Client Onboarding page with copy-paste enrollment commands, short-lifetime leaf defaults, and start/stop controls all arrive in slice 2 under the <a href="{% url 'acme:index' %}" class="link">ACME</a> menu item.</div>
+        <div class="card bg-base-100 shadow {% if step_ca.active %}border-l-4 border-success{% elif step_ca.substate == 'failed' %}border-l-4 border-error{% else %}border-l-4 border-warning{% endif %}">
+            <div class="card-body">
+                <div class="flex items-start justify-between gap-3 flex-wrap">
+                    <h2 class="card-title text-base">ACME issuance</h2>
+                    <div class="flex gap-2">
+                        <a href="{% url 'acme:onboarding' %}" class="btn btn-sm btn-primary">Client onboarding</a>
+                        <a href="{% url 'acme:index' %}" class="btn btn-sm btn-primary">Configure</a>
+                    </div>
+                </div>
+                <div class="grid gap-3 sm:grid-cols-4 mt-3 text-sm">
+                    <div>
+                        <div class="opacity-60 text-xs">step-ca daemon</div>
+                        <div class="font-medium">
+                            {% if step_ca.active %}<span class="text-success">Active</span>
+                            {% elif step_ca.substate == 'failed' %}<span class="text-error">Failed</span>
+                            {% else %}<span class="text-warning">{{ step_ca.substate|title|default:"Unknown" }}</span>{% endif %}
+                        </div>
+                    </div>
+                    <div>
+                        <div class="opacity-60 text-xs">Provisioner</div>
+                        <div class="font-medium">
+                            {{ acme_provisioner.name }}
+                            {% if not acme_provisioner.enabled %}<span class="badge badge-warning badge-sm ml-1">disabled</span>{% endif %}
+                        </div>
+                    </div>
+                    <div>
+                        <div class="opacity-60 text-xs">Template</div>
+                        <div class="font-medium">{{ acme_provisioner.effective_template.name }}</div>
+                    </div>
+                    <div>
+                        <div class="opacity-60 text-xs">Default lifetime</div>
+                        <div class="font-medium">{{ acme_provisioner.effective_template.default_lifetime_days }} days</div>
+                    </div>
+                </div>
+                {% if not step_ca.active %}
+                    <div class="alert alert-warning mt-3 text-sm">
+                        <span>Daemon isn't running — ACME enrolment is paused. Start it from <a class="link" href="{% url 'core:settings' %}">Settings</a>.</span>
+                    </div>
+                {% endif %}
             </div>
         </div>
     {% endif %}
