@@ -42,8 +42,8 @@
             <div class="px-4 pb-4 pt-2 bg-base-200/50">
                 <pre id="pem-root" class="bg-neutral text-neutral-content p-3 rounded text-xs overflow-auto font-mono max-h-80 whitespace-pre">{{ pems.root }}</pre>
                 <div class="mt-2 flex flex-wrap gap-2 items-center">
-                    <button type="button" class="btn btn-sm" data-copy-from="pem-root">Copy to clipboard</button>
-                    <a href="{% url 'trust:root_crt' %}" class="btn btn-sm btn-ghost">Download file</a>
+                    <button type="button" class="btn btn-sm btn-primary" data-copy-from="pem-root">Copy to clipboard</button>
+                    <a href="{% url 'trust:root_crt' %}" class="btn btn-sm btn-primary">Download file</a>
                 </div>
             </div>
         </details>
@@ -79,8 +79,8 @@
             <div class="px-4 pb-4 pt-2 bg-base-200/50">
                 <pre id="pem-bundle" class="bg-neutral text-neutral-content p-3 rounded text-xs overflow-auto font-mono max-h-80 whitespace-pre">{{ pems.bundle }}</pre>
                 <div class="mt-2 flex flex-wrap gap-2 items-center">
-                    <button type="button" class="btn btn-sm" data-copy-from="pem-bundle">Copy to clipboard</button>
-                    <a href="{% url 'trust:bundle_crt' %}" class="btn btn-sm btn-ghost">Download file</a>
+                    <button type="button" class="btn btn-sm btn-primary" data-copy-from="pem-bundle">Copy to clipboard</button>
+                    <a href="{% url 'trust:bundle_crt' %}" class="btn btn-sm btn-primary">Download file</a>
                 </div>
             </div>
         </details>
@@ -116,8 +116,8 @@
             <div class="px-4 pb-4 pt-2 bg-base-200/50">
                 <pre id="pem-chain" class="bg-neutral text-neutral-content p-3 rounded text-xs overflow-auto font-mono max-h-80 whitespace-pre">{{ pems.chain }}</pre>
                 <div class="mt-2 flex flex-wrap gap-2 items-center">
-                    <button type="button" class="btn btn-sm" data-copy-from="pem-chain">Copy to clipboard</button>
-                    <a href="{% url 'trust:chain_pem' %}" class="btn btn-sm btn-ghost">Download file</a>
+                    <button type="button" class="btn btn-sm btn-primary" data-copy-from="pem-chain">Copy to clipboard</button>
+                    <a href="{% url 'trust:chain_pem' %}" class="btn btn-sm btn-primary">Download file</a>
                 </div>
             </div>
         </details>
@@ -137,8 +137,8 @@
                     <span class="font-mono text-sm">root_ca.crt</span>
                     <span class="badge badge-xs">Root CA</span>
                     <div class="ml-auto flex gap-2">
-                        <button type="button" class="btn btn-xs" data-copy-from="adv-pem-root">Copy</button>
-                        <a href="{% url 'trust:root_crt' %}" class="btn btn-xs btn-ghost">Download</a>
+                        <button type="button" class="btn btn-xs btn-primary" data-copy-from="adv-pem-root">Copy</button>
+                        <a href="{% url 'trust:root_crt' %}" class="btn btn-xs btn-primary">Download</a>
                     </div>
                 </div>
                 <details class="mt-2"><summary class="cursor-pointer text-xs opacity-60 select-none">show PEM</summary>
@@ -153,8 +153,8 @@
                     <span class="font-mono text-sm">intermediate_ca.crt</span>
                     <span class="badge badge-xs">Intermediate CA</span>
                     <div class="ml-auto flex gap-2">
-                        <button type="button" class="btn btn-xs" data-copy-from="adv-pem-int">Copy</button>
-                        <a href="{% url 'trust:intermediate_crt' %}" class="btn btn-xs btn-ghost">Download</a>
+                        <button type="button" class="btn btn-xs btn-primary" data-copy-from="adv-pem-int">Copy</button>
+                        <a href="{% url 'trust:intermediate_crt' %}" class="btn btn-xs btn-primary">Download</a>
                     </div>
                 </div>
                 <details class="mt-2"><summary class="cursor-pointer text-xs opacity-60 select-none">show PEM</summary>
@@ -169,8 +169,8 @@
                     <span class="font-mono text-sm">issuer_ca.crt</span>
                     <span class="badge badge-xs">Issuing CA</span>
                     <div class="ml-auto flex gap-2">
-                        <button type="button" class="btn btn-xs" data-copy-from="adv-pem-iss">Copy</button>
-                        <a href="{% url 'trust:issuer_crt' %}" class="btn btn-xs btn-ghost">Download</a>
+                        <button type="button" class="btn btn-xs btn-primary" data-copy-from="adv-pem-iss">Copy</button>
+                        <a href="{% url 'trust:issuer_crt' %}" class="btn btn-xs btn-primary">Download</a>
                     </div>
                 </div>
                 <details class="mt-2"><summary class="cursor-pointer text-xs opacity-60 select-none">show PEM</summary>

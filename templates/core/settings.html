@@ -31,7 +31,7 @@
                 </div>
                 <form method="post" action="{% url 'ca:sign_webui' %}" class="mt-3">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-sm btn-ghost">Rotate / re-issue</button>
+                    <button type="submit" class="btn btn-sm btn-primary">Rotate / re-issue</button>
                 </form>
             {% else %}
                 <p class="text-sm opacity-80 mt-0">
