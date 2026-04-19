@@ -4,7 +4,7 @@ from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views import View
 
-from apps.ca import keygen, renderer
+from apps.ca import daemon, keygen, renderer
 from apps.nodes.models import NodeConfig
 from apps.wizard.helpers.guards import redirect_if_configured, redirect_if_no_role
 
@@ -42,6 +42,19 @@ class StepReviewView(LoginRequiredMixin, View):
         config.configured_at = timezone.now()
         config.wizard_step = 4
         config.save()
+
+        # Issuing node: enable + start step-ca so the ACME API is live on :9000.
+        # Non-fatal — admin can recover from the Settings daemon card if either
+        # call fails (usually a systemctl race or a missing password file).
+        if config.is_issuing:
+            daemon.enable()
+            ok, err = daemon.start()
+            if not ok:
+                messages.warning(
+                    request,
+                    f"step-ca daemon did not start automatically ({err or 'see journalctl -u step-ca'}). "
+                    f"You can retry from Settings.",
+                )
         return redirect("wizard:finish")
 
     def _context(self, config):

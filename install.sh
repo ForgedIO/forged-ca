@@ -417,11 +417,19 @@ ${APP_USER} ALL=(ALL) NOPASSWD: /bin/systemctl stop step-ca
 ${APP_USER} ALL=(ALL) NOPASSWD: /bin/systemctl restart step-ca
 ${APP_USER} ALL=(ALL) NOPASSWD: /bin/systemctl reload step-ca
 ${APP_USER} ALL=(ALL) NOPASSWD: /bin/systemctl status step-ca
+${APP_USER} ALL=(ALL) NOPASSWD: /bin/systemctl enable step-ca
+${APP_USER} ALL=(ALL) NOPASSWD: /bin/systemctl disable step-ca
+${APP_USER} ALL=(ALL) NOPASSWD: /bin/systemctl is-active step-ca
+${APP_USER} ALL=(ALL) NOPASSWD: /bin/systemctl is-enabled step-ca
 ${APP_USER} ALL=(ALL) NOPASSWD: /usr/bin/systemctl start step-ca
 ${APP_USER} ALL=(ALL) NOPASSWD: /usr/bin/systemctl stop step-ca
 ${APP_USER} ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart step-ca
 ${APP_USER} ALL=(ALL) NOPASSWD: /usr/bin/systemctl reload step-ca
 ${APP_USER} ALL=(ALL) NOPASSWD: /usr/bin/systemctl status step-ca
+${APP_USER} ALL=(ALL) NOPASSWD: /usr/bin/systemctl enable step-ca
+${APP_USER} ALL=(ALL) NOPASSWD: /usr/bin/systemctl disable step-ca
+${APP_USER} ALL=(ALL) NOPASSWD: /usr/bin/systemctl is-active step-ca
+${APP_USER} ALL=(ALL) NOPASSWD: /usr/bin/systemctl is-enabled step-ca
 EOF
 chmod 440 /etc/sudoers.d/forgedca-stepca
 
