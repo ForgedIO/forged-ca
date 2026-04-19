@@ -11,6 +11,33 @@ from pathlib import Path
 from django.conf import settings
 
 
+def _issuer_chain_pem(config) -> Path:
+    """Write /etc/step-ca/certs/issuer_chain.crt — the Issuing CA + any
+    parent Intermediate CA concatenated, in that order.
+
+    step-ca's `crt` field accepts a PEM bundle. When it signs a leaf, the
+    ACME response returns `leaf + the contents of crt[1:]` so the client
+    can chain all the way up to its trusted Root without AIA chasing.
+
+    In a 2-tier setup (Root → Intermediate → Leaf) step-ca's single-cert
+    `crt` field is fine — the intermediate IS the signer. In a 3-tier
+    setup (Root → Intermediate → Issuing → Leaf), pointing `crt` at the
+    Issuing cert alone means the Intermediate is missing from the
+    returned chain and clients can't validate without pre-trusting it —
+    which defeats the whole point of having a Root.
+    """
+    base = Path(settings.STEP_CA_CONFIG_DIR)
+    bundle = base / "certs" / "issuer_chain.crt"
+    parts: list[bytes] = []
+    if config.issuing_cert_path and Path(config.issuing_cert_path).is_file():
+        parts.append(Path(config.issuing_cert_path).read_bytes().rstrip())
+    if config.intermediate_cert_path and Path(config.intermediate_cert_path).is_file():
+        parts.append(Path(config.intermediate_cert_path).read_bytes().rstrip())
+    bundle.write_bytes(b"\n".join(parts) + b"\n")
+    os.chmod(bundle, 0o640)
+    return bundle
+
+
 def _provisioners() -> list[dict]:
     """Build the authority.provisioners[] array from model state.
 
@@ -44,10 +71,15 @@ def render(config) -> dict | None:
     base = Path(settings.STEP_CA_CONFIG_DIR)
     step_db = settings.STEP_CA_DB
 
+    # In a 3-tier setup, `crt` must be the issuer-chain bundle so step-ca
+    # includes the Intermediate in the ACME response. _issuer_chain_pem
+    # (re)writes the bundle every render — idempotent.
+    crt_path = str(_issuer_chain_pem(config))
+
     return {
         "root": config.root_cert_path,
         "federatedRoots": [],
-        "crt": config.issuing_cert_path,
+        "crt": crt_path,
         "key": config.issuing_key_path,
         "address": ":9000",
         "insecureAddress": "",
