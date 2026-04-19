@@ -3,6 +3,11 @@ Description=step-ca online certificate authority
 Documentation=https://smallstep.com/docs/step-ca/
 After=network.target postgresql.service
 Wants=postgresql.service
+# After 5 restart attempts in 60s the service gives up rather than
+# crash-looping indefinitely. Clear with `systemctl reset-failed step-ca`
+# or via the "Retry start" button in the Settings daemon card.
+StartLimitIntervalSec=60
+StartLimitBurst=5
 
 [Service]
 Type=simple
@@ -16,9 +21,13 @@ Restart=on-failure
 RestartSec=5
 TimeoutStopSec=30
 
-# step-ca only needs its own config dir; lock everything else down.
+# step-ca logs to stdout → captured by journald. It only needs write access
+# to its own config dir and its state dir; lock everything else down.
+# Don't list paths that may not exist on the host — ReadWritePaths fails the
+# whole namespace setup if any listed path is missing, which would block
+# startup before step-ca even runs.
 ProtectSystem=strict
-ReadWritePaths=/etc/step-ca /var/lib/step-ca /var/log/step-ca
+ReadWritePaths=/etc/step-ca /var/lib/step-ca
 ProtectHome=yes
 PrivateTmp=yes
 NoNewPrivileges=yes
