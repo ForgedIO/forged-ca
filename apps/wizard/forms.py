@@ -75,6 +75,15 @@ class LifetimesForm(forms.Form):
 
     def clean_webui_sans(self):
         raw = self.cleaned_data.get("webui_sans", "")
+        # Always carry the Hostname field into the Web UI SANs. The textarea
+        # is pre-populated at GET time, before the admin has typed the
+        # hostname on this same step — without this merge, an admin who
+        # types `forgedca.example.com` into Hostname and accepts the
+        # pre-filled SAN textarea ships a cert that doesn't cover the FQDN
+        # in their browser's address bar. parse_sans dedupes case-insensitively.
+        hostname = (self.cleaned_data.get("hostname") or "").strip()
+        if hostname:
+            raw = hostname + "\n" + raw
         dns, ips = parse_sans(raw)
         if not dns and not ips:
             raise ValidationError("Add at least one DNS name or IP.")

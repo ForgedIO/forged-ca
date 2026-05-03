@@ -137,9 +137,19 @@
                         <div class="stat-value text-base">{{ config.webui_lifetime_days }} days</div>
                     </div>
                 </div>
-                <form method="post" action="{% url 'ca:sign_webui' %}" class="mt-3">
+                <form method="post" action="{% url 'ca:sign_webui' %}" class="mt-4 space-y-3">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-sm btn-primary">Rotate / re-issue</button>
+                    <div class="form-control">
+                        <label for="webui_sans" class="label pb-1">
+                            <span class="label-text font-medium">Subject Alternative Names</span>
+                        </label>
+                        <textarea id="webui_sans" name="webui_sans" rows="5" required
+                                  class="textarea textarea-bordered font-mono text-sm w-full">{{ config.webui_sans }}</textarea>
+                        <div class="label pt-1">
+                            <span class="label-text-alt opacity-70">One DNS name or IP per line. Add every name you reach this admin UI on — including the FQDN in your browser's address bar. A missing name is what triggers Chrome's "unusual and incorrect credentials" / Firefox's "SSL_ERROR_BAD_CERT_DOMAIN".</span>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary">Save &amp; re-issue</button>
                 </form>
             {% elif config.is_issuing %}
                 <p class="text-sm opacity-80 mt-0">
@@ -156,12 +166,22 @@
 
                 <div class="mt-5">
                     <h3 class="font-semibold">Step 2. Sign this Web UI</h3>
-                    <p class="text-sm opacity-70 mt-1">Once step 1 is done <strong>on this device</strong>, click the button. nginx reloads with the freshly-issued cert.</p>
+                    <p class="text-sm opacity-70 mt-1">Once step 1 is done <strong>on this device</strong>, review the SAN list below and click the button. nginx reloads with the freshly-issued cert.</p>
                     <div class="alert alert-warning mt-2 text-sm">
                         <span>If you click before installing the Root, the browser will block this page as signed by an unknown CA and you'll lose access except from another device (or by restoring <code class="font-mono">/opt/forgedca/certs/forgedca.crt</code> from SSH).</span>
                     </div>
-                    <form method="post" action="{% url 'ca:sign_webui' %}" class="mt-3">
+                    <form method="post" action="{% url 'ca:sign_webui' %}" class="mt-3 space-y-3">
                         {% csrf_token %}
+                        <div class="form-control">
+                            <label for="webui_sans_initial" class="label pb-1">
+                                <span class="label-text font-medium">Subject Alternative Names</span>
+                            </label>
+                            <textarea id="webui_sans_initial" name="webui_sans" rows="5" required
+                                      class="textarea textarea-bordered font-mono text-sm w-full">{{ config.webui_sans }}</textarea>
+                            <div class="label pt-1">
+                                <span class="label-text-alt opacity-70">One per line. Pre-filled from the wizard — add anything missing (e.g. the FQDN in your browser's address bar) before signing.</span>
+                            </div>
+                        </div>
                         <button type="submit" class="btn btn-primary">Sign Web UI with ForgedCA</button>
                     </form>
                 </div>

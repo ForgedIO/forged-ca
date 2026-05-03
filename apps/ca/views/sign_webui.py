@@ -13,6 +13,7 @@ from django.shortcuts import redirect
 from django.views import View
 
 from apps.ca import keygen
+from apps.nodes.helpers.network import parse_sans
 from apps.nodes.models import NodeConfig
 
 
@@ -34,6 +35,25 @@ class SignWebuiView(LoginRequiredMixin, View):
                 "directly off a Root or Intermediate.",
             )
             return redirect("core:settings")
+
+        # The Settings card POSTs the SAN list alongside the rotate button so
+        # admins can fix a missing FQDN in one click instead of needing a
+        # separate "edit SANs" page. parse_sans dedupes and classifies; an
+        # empty result means the textarea was blank or whitespace-only.
+        # Always carry config.hostname into the SANs — same invariant the
+        # wizard enforces. Without it, an admin who clicks rotate without
+        # editing the textarea ships a cert that doesn't cover the FQDN they
+        # type in the browser.
+        raw_sans = request.POST.get("webui_sans", "")
+        if raw_sans.strip():
+            if config.hostname and config.hostname.strip():
+                raw_sans = config.hostname.strip() + "\n" + raw_sans
+            dns, ips = parse_sans(raw_sans)
+            if not dns and not ips:
+                messages.error(request, "Add at least one DNS name or IP to the SAN list.")
+                return redirect("core:settings")
+            config.webui_sans = "\n".join(dns + ips)
+            config.save(update_fields=["webui_sans"])
 
         try:
             keygen.generate_webui_cert(config)
