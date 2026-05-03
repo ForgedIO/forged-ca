@@ -29,12 +29,30 @@ def detect_hostname() -> str:
         return "localhost"
 
 
+def _looks_like_fqdn(name: str) -> bool:
+    """A DNS SAN is only useful if it has at least one dot. Single-label
+    names (`RootCA`, `localhost`, `myserver`) are non-FQDN and trip NSS-
+    based validators (Firefox/Chrome) which can reject the whole cert as
+    malformed even when the FQDN you connect to is in the SAN list too."""
+    name = (name or "").strip().rstrip(".")
+    return bool(name) and "." in name
+
+
 def default_webui_sans(extra_hostname: str = "") -> str:
     """One-SAN-per-line text suitable for a <textarea> initial value.
 
-    Always includes `localhost`. Adds the OS hostname, the primary LAN IP,
-    and optionally a caller-supplied hostname (e.g. the hostname the admin
-    typed earlier in the wizard) — dedup'd, order-preserving."""
+    Includes the caller-supplied hostname (typically `config.hostname` —
+    the public FQDN admins type in their browser), the OS hostname *only
+    when it's an FQDN*, and the primary LAN IP. Order-preserving and
+    deduped case-insensitively.
+
+    Single-label names (e.g. `localhost`, the OS short hostname) are
+    deliberately excluded: NSS — Firefox's and Chromium's crypto library —
+    rejects DNS SANs that aren't FQDNs, and a single bad SAN entry causes
+    the browser to reject the whole cert with a generic "self-signed /
+    missing intermediates" error. Admins who genuinely need a single-label
+    name can add it manually in the Settings SAN editor; we don't seed
+    one as a default and silently break the cert."""
     sans: list[str] = []
     seen: set[str] = set()
 
@@ -44,10 +62,11 @@ def default_webui_sans(extra_hostname: str = "") -> str:
             seen.add(v.lower())
             sans.append(v)
 
-    if extra_hostname:
+    if extra_hostname and _looks_like_fqdn(extra_hostname):
         add(extra_hostname)
-    add(detect_hostname())
-    add("localhost")
+    os_host = detect_hostname()
+    if _looks_like_fqdn(os_host):
+        add(os_host)
     ip = detect_primary_ip()
     if ip:
         add(ip)
