@@ -7,49 +7,6 @@
 </div>
 
 <div class="space-y-3">
-    {% if pems.root %}
-    <div class="border border-base-300 rounded-lg bg-base-100 overflow-hidden">
-        <div class="p-4 flex items-start gap-4">
-            <div class="text-primary mt-0.5 shrink-0">
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13M7 11l5 5 5-5M5 21h14"/></svg>
-            </div>
-            <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 flex-wrap">
-                    <span class="font-semibold">Root CA certificate</span>
-                    <span class="badge badge-sm badge-primary">Install on endpoints</span>
-                </div>
-                <p class="text-sm opacity-70 mt-1">Install on every device in your fleet that should trust certificates issued here. This is what stops "untrusted certificate" warnings across the board.</p>
-                <div class="text-xs opacity-60 mt-2 flex flex-wrap gap-x-4 gap-y-1">
-                    <span><strong>Windows:</strong> GPO or Intune</span>
-                    <span><strong>macOS:</strong> Keychain or MDM</span>
-                    <span><strong>Linux:</strong> /etc/ca-certificates</span>
-                    <span><strong>iOS / Android:</strong> MDM profile</span>
-                </div>
-            </div>
-            <div class="shrink-0 flex flex-col items-end gap-2">
-                <div class="font-mono text-xs opacity-70">root_ca.crt</div>
-                <a href="{% url 'trust:root_crt' %}" class="btn btn-primary btn-sm gap-2">
-                    <svg class="icon-sm" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                    Download
-                </a>
-            </div>
-        </div>
-        <details class="border-t border-base-300 group">
-            <summary class="px-4 py-2 cursor-pointer text-xs font-medium opacity-70 hover:bg-base-200 select-none flex items-center gap-2 list-none [&::-webkit-details-marker]:hidden">
-                <svg class="icon-xs transition-transform group-open:rotate-90" fill="currentColor" viewBox="0 0 20 20"><path d="M7 5l6 5-6 5V5z"/></svg>
-                View / copy PEM content
-            </summary>
-            <div class="px-4 pb-4 pt-2 bg-base-200/50">
-                <pre id="pem-root" class="bg-neutral text-neutral-content p-3 rounded text-xs overflow-auto font-mono max-h-80 whitespace-pre">{{ pems.root }}</pre>
-                <div class="mt-2 flex flex-wrap gap-2 items-center">
-                    <button type="button" class="btn btn-sm btn-primary" data-copy-from="pem-root">Copy to clipboard</button>
-                    <a href="{% url 'trust:root_crt' %}" class="btn btn-sm btn-primary">Download file</a>
-                </div>
-            </div>
-        </details>
-    </div>
-    {% endif %}
-
     {% if pems.bundle and config.is_intermediate %}
     <div class="border border-base-300 rounded-lg bg-base-100 overflow-hidden">
         <div class="p-4 flex items-start gap-4">
@@ -59,9 +16,17 @@
             <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2 flex-wrap">
                     <span class="font-semibold">Trust bundle</span>
-                    <span class="badge badge-sm">Root + Intermediate</span>
+                    <span class="badge badge-sm badge-primary">Install on endpoints</span>
+                    <span class="badge badge-sm">Root + Intermediate + Issuing</span>
                 </div>
-                <p class="text-sm opacity-70 mt-1">Same trust anchors as the Root, plus the Intermediate CA. Use this if you want devices to have both trust anchors pre-loaded (smoother if you rotate the Intermediate later).</p>
+                <p class="text-sm opacity-70 mt-1">All three CA certificates concatenated &mdash; install this on every device in your fleet that should trust certificates issued here. This is the recommended fleet-trust install.</p>
+                <p class="text-xs opacity-60 mt-2"><strong>Why all three, not just the Root?</strong> RFC-correct chain validation only needs the Root anchored locally; subordinate CAs come from the server's wire chain. In practice, several browser chain-builders (notably Mozilla NSS) don't always use an Issuing CA presented on the wire to bridge a leaf to a locally-trusted Intermediate, even when an otherwise-identical chain validates from the same anchors for a different leaf. Anchoring all three locally side-steps that asymmetry without weakening the trust model.</p>
+                <div class="text-xs opacity-60 mt-2 flex flex-wrap gap-x-4 gap-y-1">
+                    <span><strong>Windows:</strong> GPO or Intune</span>
+                    <span><strong>macOS:</strong> Keychain or MDM</span>
+                    <span><strong>Linux:</strong> /etc/ca-certificates</span>
+                    <span><strong>iOS / Android:</strong> MDM profile</span>
+                </div>
             </div>
             <div class="shrink-0 flex flex-col items-end gap-2">
                 <div class="font-mono text-xs opacity-70">bundle.crt</div>
@@ -81,6 +46,43 @@
                 <div class="mt-2 flex flex-wrap gap-2 items-center">
                     <button type="button" class="btn btn-sm btn-primary" data-copy-from="pem-bundle">Copy to clipboard</button>
                     <a href="{% url 'trust:bundle_crt' %}" class="btn btn-sm btn-primary">Download file</a>
+                </div>
+            </div>
+        </details>
+    </div>
+    {% endif %}
+
+    {% if pems.root %}
+    <div class="border border-base-300 rounded-lg bg-base-100 overflow-hidden">
+        <div class="p-4 flex items-start gap-4">
+            <div class="text-primary mt-0.5 shrink-0 opacity-70">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13M7 11l5 5 5-5M5 21h14"/></svg>
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="font-semibold">Root CA certificate only</span>
+                    <span class="badge badge-sm badge-ghost">Advanced</span>
+                </div>
+                <p class="text-sm opacity-70 mt-1">The Root CA on its own. <strong>Most fleets should install the bundle above instead</strong> &mdash; the bundle includes this Root plus the Intermediate and Issuing CAs, and avoids the browser chain-builder asymmetry described above. Use this Root-only file when you have a specific reason (e.g. you're already managing Intermediate distribution separately, or you're publishing the Root fingerprint for verification).</p>
+            </div>
+            <div class="shrink-0 flex flex-col items-end gap-2">
+                <div class="font-mono text-xs opacity-70">root_ca.crt</div>
+                <a href="{% url 'trust:root_crt' %}" class="btn btn-ghost btn-sm gap-2">
+                    <svg class="icon-sm" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    Download
+                </a>
+            </div>
+        </div>
+        <details class="border-t border-base-300 group">
+            <summary class="px-4 py-2 cursor-pointer text-xs font-medium opacity-70 hover:bg-base-200 select-none flex items-center gap-2 list-none [&::-webkit-details-marker]:hidden">
+                <svg class="icon-xs transition-transform group-open:rotate-90" fill="currentColor" viewBox="0 0 20 20"><path d="M7 5l6 5-6 5V5z"/></svg>
+                View / copy PEM content
+            </summary>
+            <div class="px-4 pb-4 pt-2 bg-base-200/50">
+                <pre id="pem-root" class="bg-neutral text-neutral-content p-3 rounded text-xs overflow-auto font-mono max-h-80 whitespace-pre">{{ pems.root }}</pre>
+                <div class="mt-2 flex flex-wrap gap-2 items-center">
+                    <button type="button" class="btn btn-sm btn-primary" data-copy-from="pem-root">Copy to clipboard</button>
+                    <a href="{% url 'trust:root_crt' %}" class="btn btn-sm btn-primary">Download file</a>
                 </div>
             </div>
         </details>
@@ -185,10 +187,13 @@
         <summary class="collapse-title text-sm font-medium">Automate with curl / Ansible / CI</summary>
         <div class="collapse-content">
             <p class="text-xs opacity-70 mb-2">The trust endpoints are public by default so unattended tooling can pull them. You can flip the node-level toggle to require admin auth if your environment demands it.</p>
-            <pre class="bg-base-300 p-3 rounded text-xs overflow-x-auto"><code># Fetch the chain
+            <pre class="bg-base-300 p-3 rounded text-xs overflow-x-auto"><code># Fleet trust install: Root + Intermediate + Issuing concatenated
+curl -ko bundle.crt https://{{ config.hostname|default:"localhost" }}:8443{% url 'trust:bundle_crt' %}
+
+# Fetch the chain (for serving alongside a TLS server's leaf cert)
 curl -ko chain.pem https://{{ config.hostname|default:"localhost" }}:8443{% url 'trust:chain_pem' %}
 
-# Fetch just the Root for fleet trust
+# Fetch just the Root (advanced — most fleets should use bundle.crt above)
 curl -ko root_ca.crt https://{{ config.hostname|default:"localhost" }}:8443{% url 'trust:root_crt' %}</code></pre>
         </div>
     </details>

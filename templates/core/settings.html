@@ -157,8 +157,8 @@
                 </p>
 
                 <div class="mt-4">
-                    <h3 class="font-semibold">Step 1. Install the Root CA on this device</h3>
-                    <p class="text-sm opacity-70 mt-1">Grab the Root from the <a href="{% url 'trust:index' %}" class="link">Trust</a> page, then follow the instructions for your OS / browser:</p>
+                    <h3 class="font-semibold">Step 1. Install the trust bundle on this device</h3>
+                    <p class="text-sm opacity-70 mt-1">Grab <code class="font-mono">bundle.crt</code> (Root + Intermediate + Issuing) from the <a href="{% url 'trust:index' %}" class="link">Trust</a> page, then follow the instructions for your OS / browser:</p>
                     <div class="mt-3">
                         {% include "partials/trust_install_instructions.html" %}
                     </div>
@@ -168,7 +168,7 @@
                     <h3 class="font-semibold">Step 2. Sign this Web UI</h3>
                     <p class="text-sm opacity-70 mt-1">Once step 1 is done <strong>on this device</strong>, review the SAN list below and click the button. nginx reloads with the freshly-issued cert.</p>
                     <div class="alert alert-warning mt-2 text-sm">
-                        <span>If you click before installing the Root, the browser will block this page as signed by an unknown CA and you'll lose access except from another device (or by restoring <code class="font-mono">/opt/forgedca/certs/forgedca.crt</code> from SSH).</span>
+                        <span>If you click before installing the trust bundle, the browser will block this page as signed by an unknown CA and you'll lose access except from another device (or by restoring <code class="font-mono">/opt/forgedca/certs/forgedca.crt</code> from SSH).</span>
                     </div>
                     <form method="post" action="{% url 'ca:sign_webui' %}" class="mt-3 space-y-3">
                         {% csrf_token %}

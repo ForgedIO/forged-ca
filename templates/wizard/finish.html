@@ -57,9 +57,9 @@
         <div class="card-body">
             <div class="flex items-center gap-3 mb-1">
                 <div class="rounded-full bg-primary text-primary-content w-8 h-8 flex items-center justify-center font-bold">2</div>
-                <h2 class="card-title">Install the Root on this device</h2>
+                <h2 class="card-title">Install the trust bundle on this device</h2>
             </div>
-            <p class="text-sm opacity-70 mt-0">Pick the instructions for whichever OS + browser you're on right now. After this, your browser trusts anything signed by your new CA &mdash; including the cert we'll swap in on step 3.</p>
+            <p class="text-sm opacity-70 mt-0">Pick the instructions for whichever OS + browser you're on right now. The bundle anchors the Root, Intermediate, and Issuing CAs locally so your browser trusts anything signed by your new CA &mdash; including the cert we'll swap in on step 3.</p>
 
             <div class="mt-4">
                 {% include "partials/trust_install_instructions.html" %}
@@ -75,11 +75,11 @@
                 <h2 class="card-title">Sign this admin UI with your new CA</h2>
             </div>
             <p class="text-sm opacity-80 mt-0">
-                Once step 2 is done <strong>on this device</strong>, head to the dashboard and click <strong>Sign Web UI with ForgedCA</strong>. nginx reloads with a freshly-issued cert and &mdash; because you've installed the Root &mdash; your browser shows a trusted lock.
+                Once step 2 is done <strong>on this device</strong>, head to the dashboard and click <strong>Sign Web UI with ForgedCA</strong>. nginx reloads with a freshly-issued cert and &mdash; because you've installed the trust bundle &mdash; your browser shows a trusted lock.
             </p>
             <div class="alert alert-warning mt-3 text-sm">
                 <span>
-                    <strong>Don't click "Sign Web UI" before finishing step 2.</strong> If you do, your browser will immediately block this page as signed by an unknown CA and you'll have no way back in until you install the Root from a different device (or SSH in and restore the self-signed cert by hand).
+                    <strong>Don't click "Sign Web UI" before finishing step 2.</strong> If you do, your browser will immediately block this page as signed by an unknown CA and you'll have no way back in until you install the trust bundle from a different device (or SSH in and restore the self-signed cert by hand).
                 </span>
             </div>
             <div class="card-actions justify-end mt-3">

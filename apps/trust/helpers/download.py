@@ -75,9 +75,19 @@ def read_all_pems(config) -> dict[str, str]:
     if chain:
         pems["chain"] = chain
 
+    # Endpoint trust bundle: Root + Intermediate + Issuing. We used to ship
+    # only Root + Intermediate on the assumption that "endpoints trust the
+    # Root, the rest comes from the wire chain" — RFC-correct, but not
+    # reliable in practice. Some browser chain-builders (notably Mozilla
+    # NSS) don't always use Issuing CA certs presented on the wire to bridge
+    # to a trusted Intermediate, while *other* leaves from the same chain
+    # validate fine. Including the Issuing CA in the trust bundle so
+    # endpoints have it anchored locally side-steps that asymmetry without
+    # weakening the model — the Issuing CA is still subordinate to the
+    # Intermediate and Root, the chain still verifies cryptographically.
     bundle = "".join(
         pems[t].rstrip() + "\n"
-        for t in ("root", "intermediate")
+        for t in ("root", "intermediate", "issuing")
         if t in pems
     )
     if bundle:

@@ -1,35 +1,38 @@
 <div class="space-y-2">
+    <p class="text-xs opacity-70">
+        Use the <code class="font-mono">bundle.crt</code> download from the Trust page &mdash; it concatenates the Root, Intermediate, and Issuing CAs. The OS / browser tooling below imports all three from a single multi-cert PEM and treats each as a trust anchor, which avoids the chain-builder asymmetry where some browsers don't reliably use a wire-supplied Issuing CA.
+    </p>
+
     <details class="border border-base-300 rounded-lg bg-base-100">
         <summary class="px-4 py-3 cursor-pointer font-medium select-none">Windows &mdash; system-wide (covers Chrome + Edge)</summary>
         <ol class="px-8 pb-4 pt-0 list-decimal text-sm opacity-80 space-y-1">
-            <li>Double-click the downloaded <code class="font-mono">root_ca.crt</code> file.</li>
+            <li>Double-click the downloaded <code class="font-mono">bundle.crt</code> file.</li>
             <li>Click <strong>Install Certificate</strong>.</li>
             <li>Choose <strong>Local Machine</strong> (requires admin) or <strong>Current User</strong>, then <strong>Next</strong>.</li>
             <li>Pick <strong>Place all certificates in the following store</strong> &rarr; <strong>Browse</strong> &rarr; <strong>Trusted Root Certification Authorities</strong>.</li>
-            <li>Finish. Chrome, Edge, and most Windows apps now trust your CA.</li>
+            <li>Finish. Windows imports each cert in the bundle. Chrome, Edge, and most Windows apps now trust your CA.</li>
         </ol>
     </details>
 
     <details class="border border-base-300 rounded-lg bg-base-100">
         <summary class="px-4 py-3 cursor-pointer font-medium select-none">macOS &mdash; system-wide (covers Safari + Chrome + Edge)</summary>
         <ol class="px-8 pb-4 pt-0 list-decimal text-sm opacity-80 space-y-1">
-            <li>Double-click <code class="font-mono">root_ca.crt</code>. Keychain Access opens.</li>
+            <li>Double-click <code class="font-mono">bundle.crt</code>. Keychain Access opens.</li>
             <li>Select the <strong>System</strong> keychain when prompted.</li>
-            <li>Find the new "ForgedCA Root CA" entry and double-click it.</li>
-            <li>Expand <strong>Trust</strong> and set <strong>When using this certificate</strong> to <strong>Always Trust</strong>.</li>
-            <li>Close the window (enter your password to save).</li>
+            <li>Three new entries appear &mdash; "ForgedCA Root CA", "ForgedCA Intermediate CA", "ForgedCA Issuing CA". For each, double-click, expand <strong>Trust</strong>, and set <strong>When using this certificate</strong> to <strong>Always Trust</strong>.</li>
+            <li>Close each window (enter your password to save).</li>
         </ol>
     </details>
 
     <details class="border border-base-300 rounded-lg bg-base-100">
         <summary class="px-4 py-3 cursor-pointer font-medium select-none">Linux &mdash; Debian / Ubuntu</summary>
-        <pre class="mx-4 mb-4 mt-0 bg-neutral text-neutral-content p-3 rounded text-xs overflow-x-auto"><code>sudo cp root_ca.crt /usr/local/share/ca-certificates/forgedca-root.crt
+        <pre class="mx-4 mb-4 mt-0 bg-neutral text-neutral-content p-3 rounded text-xs overflow-x-auto"><code>sudo cp bundle.crt /usr/local/share/ca-certificates/forgedca-bundle.crt
 sudo update-ca-certificates</code></pre>
     </details>
 
     <details class="border border-base-300 rounded-lg bg-base-100">
         <summary class="px-4 py-3 cursor-pointer font-medium select-none">Linux &mdash; RHEL / Rocky / CentOS Stream</summary>
-        <pre class="mx-4 mb-4 mt-0 bg-neutral text-neutral-content p-3 rounded text-xs overflow-x-auto"><code>sudo cp root_ca.crt /etc/pki/ca-trust/source/anchors/forgedca-root.crt
+        <pre class="mx-4 mb-4 mt-0 bg-neutral text-neutral-content p-3 rounded text-xs overflow-x-auto"><code>sudo cp bundle.crt /etc/pki/ca-trust/source/anchors/forgedca-bundle.crt
 sudo update-ca-trust</code></pre>
     </details>
 
@@ -38,9 +41,9 @@ sudo update-ca-trust</code></pre>
         <ol class="px-8 pb-4 pt-0 list-decimal text-sm opacity-80 space-y-1">
             <li>Open <code class="font-mono">about:preferences#privacy</code> (or Settings &rarr; Privacy &amp; Security).</li>
             <li>Scroll to <strong>Certificates</strong> and click <strong>View Certificates&hellip;</strong>.</li>
-            <li>On the <strong>Authorities</strong> tab, click <strong>Import&hellip;</strong> and pick <code class="font-mono">root_ca.crt</code>.</li>
-            <li>Tick <strong>Trust this CA to identify websites</strong>, click OK.</li>
-            <li>Close the certificate manager. Firefox now trusts your CA.</li>
+            <li>On the <strong>Authorities</strong> tab, click <strong>Import&hellip;</strong> and pick <code class="font-mono">bundle.crt</code>.</li>
+            <li>Firefox prompts once per cert in the bundle. For <em>each</em> prompt, tick <strong>Trust this CA to identify websites</strong> and click OK.</li>
+            <li>Close the certificate manager. Firefox now trusts all three CAs.</li>
         </ol>
     </details>
 </div>
