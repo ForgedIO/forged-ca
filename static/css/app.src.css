@@ -214,6 +214,28 @@
     }
 
     /* ---------------------------------------------------------------------
+     * Form controls — theme-aware in both light and dark
+     *
+     * @tailwindcss/forms' base reset hard-codes white on textareas, selects,
+     * and most text-flavoured inputs. That reset wins the cascade against
+     * DaisyUI's .textarea/.input/.select component rules in some builds,
+     * producing white backgrounds with bone-coloured text in dark mode —
+     * i.e. white-on-white. Re-assert the theme variables at the element
+     * level so every form control reads correctly whether or not a
+     * template remembered to add the DaisyUI class.
+     * --------------------------------------------------------------------- */
+    textarea,
+    select,
+    input:not([type='button']):not([type='submit']):not([type='reset']):not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']):not([type='file']) {
+        background-color: hsl(var(--b1));
+        color: hsl(var(--bc));
+    }
+    textarea::placeholder,
+    input::placeholder {
+        color: hsl(var(--bc) / 0.45);
+    }
+
+    /* ---------------------------------------------------------------------
      * Custom tab component (.client-tabs)
      *
      * Tried DaisyUI's .tabs-lifted with radio inputs on the ACME onboarding
