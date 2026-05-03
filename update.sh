@@ -157,6 +157,56 @@ cp "${APP_HOME}/deploy/step-ca.service.template"  /etc/systemd/system/step-ca.se
 systemctl daemon-reload
 
 # ---------------------------------------------------------------------------
+# Re-render nginx config from the synced template
+#
+# install.sh writes the rendered nginx config once at install time. After
+# that, subsequent template changes (header tweaks, new locations) need to
+# be re-rendered into the live nginx config — otherwise the template in
+# /opt/forgedca/deploy/ silently diverges from what nginx actually serves.
+# Read the current PORT out of the existing rendered config so we don't
+# need to persist it elsewhere; default to 8443 if for any reason the
+# existing config is missing or unreadable.
+# ---------------------------------------------------------------------------
+echo "==> Re-rendering nginx config from template..."
+NGINX_CONF_FILE="/etc/nginx/conf.d/forgedca.conf"
+[[ -f /etc/nginx/sites-available/forgedca ]] && NGINX_CONF_FILE="/etc/nginx/sites-available/forgedca"
+PORT=""
+if [[ -f "${NGINX_CONF_FILE}" ]]; then
+    PORT="$(grep -oE 'listen[[:space:]]+[0-9]+' "${NGINX_CONF_FILE}" | head -1 | awk '{print $NF}')"
+fi
+PORT="${PORT:-8443}"
+
+NGINX_TMP="${NGINX_CONF_FILE}.new"
+sed -e "s|{{ WEB_PORT }}|${PORT}|g" \
+    "${APP_HOME}/deploy/nginx.conf.template" > "${NGINX_TMP}"
+if grep -q '{{' "${NGINX_TMP}"; then
+    rm -f "${NGINX_TMP}"
+    echo "    ERROR: unrendered placeholders remain in nginx template; left existing config alone." >&2
+    exit 1
+fi
+
+# Atomic swap, then validate against the live nginx config tree.
+NGINX_BACKUP="${NGINX_CONF_FILE}.bak"
+cp -a "${NGINX_CONF_FILE}" "${NGINX_BACKUP}" 2>/dev/null || true
+mv "${NGINX_TMP}" "${NGINX_CONF_FILE}"
+if nginx -t >/dev/null 2>&1; then
+    if systemctl is-active nginx &>/dev/null; then
+        nginx -s reload
+    fi
+    rm -f "${NGINX_BACKUP}"
+    echo "    Nginx config re-rendered (port ${PORT}) and reloaded."
+else
+    if [[ -f "${NGINX_BACKUP}" ]]; then
+        mv "${NGINX_BACKUP}" "${NGINX_CONF_FILE}"
+        echo "    ERROR: re-rendered nginx config failed nginx -t; reverted to previous config." >&2
+    else
+        echo "    ERROR: re-rendered nginx config failed nginx -t and no backup was made." >&2
+    fi
+    nginx -t >&2 || true
+    exit 1
+fi
+
+# ---------------------------------------------------------------------------
 # Refresh sudoers drop-ins
 #
 # Slice 2A widened the step-ca sudoers grant (added enable/disable/is-active/

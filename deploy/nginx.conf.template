@@ -13,6 +13,16 @@ server {
     ssl_session_cache   shared:SSL:10m;
     ssl_session_timeout 10m;
 
+    # HSTS: explicitly opt out. ForgedCA is still iterating its cert pipeline
+    # (manual rotate today, ACME auto-rotate later), and any cert hiccup with
+    # an HSTS pin in place becomes an unrecoverable browser lockout — no
+    # click-through-warning, no easy fix without clearing browser state.
+    # `max-age=0` actively clears any pin a browser may already hold for this
+    # origin (e.g. inherited from a parent zone with includeSubDomains, or
+    # planted by an earlier deploy). Flip to a real lifetime in a later
+    # slice once auto-renewal is rock-solid; until then, no HSTS.
+    add_header Strict-Transport-Security "max-age=0" always;
+
     client_max_body_size 16M;
 
     proxy_read_timeout    300s;
@@ -23,6 +33,9 @@ server {
         alias /opt/forgedca/staticfiles/;
         expires 30d;
         add_header Cache-Control "public, immutable";
+        # nginx drops every server-level add_header when a location has its
+        # own. Repeat HSTS here so static responses also clear the pin.
+        add_header Strict-Transport-Security "max-age=0" always;
     }
 
     location / {
