@@ -26,7 +26,19 @@ fi
 if [[ -d "${SCRIPT_DIR}/.git" ]]; then
     echo "==> git pull origin main"
     git -C "${SCRIPT_DIR}" fetch --quiet origin
+    PRE_PULL_HEAD="$(git -C "${SCRIPT_DIR}" rev-parse HEAD)"
     git -C "${SCRIPT_DIR}" pull --ff-only origin main
+    POST_PULL_HEAD="$(git -C "${SCRIPT_DIR}" rev-parse HEAD)"
+    # Re-exec ourselves if the pull advanced HEAD. Bash holds the script
+    # in memory while it runs, so changes to update.sh further down in
+    # this very file would otherwise sit on disk un-executed until the
+    # admin runs the script a second time. UPDATE_REEXECED guards against
+    # an infinite re-exec loop if something goes wrong with the rev-parse.
+    if [[ "${PRE_PULL_HEAD}" != "${POST_PULL_HEAD}" && -z "${UPDATE_REEXECED:-}" ]]; then
+        echo "==> update.sh itself changed (${PRE_PULL_HEAD:0:7} -> ${POST_PULL_HEAD:0:7}); re-execing with new version"
+        export UPDATE_REEXECED=1
+        exec bash "${BASH_SOURCE[0]}" "$@"
+    fi
 else
     echo "==> Not a git checkout — skipping git pull (assuming code already updated)"
 fi
