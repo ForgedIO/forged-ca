@@ -319,9 +319,19 @@ def generate_webui_cert(config) -> GeneratedArtifact:
     tmp_key = WEBUI_CERT_PATH.with_suffix(".leaf.key")
 
     common_name = sans[0]
+    # Match the ACME-issued leaf shape exactly: RSA 2048, which is what
+    # step-ca's ACME provisioner produces for clients that submit RSA CSRs
+    # (the typical case). step-cli's `--profile leaf` defaults to EC P-256
+    # with KU=digitalSignature only; that combination — while RFC-compliant —
+    # is rejected by all major browsers in this stack while the otherwise-
+    # identical RSA cert from the ACME path is accepted. Aligning the key
+    # type forces both code paths to produce certs the browser stack treats
+    # the same.
     step_args = [
         "certificate", "create",
         "--profile", "leaf",
+        "--kty", "RSA",
+        "--size", "2048",
         "--ca", str(signer_cert),
         "--ca-key", str(signer_key),
         "--ca-password-file", pw_file,
