@@ -67,6 +67,9 @@
                         </label>
                     {% endfor %}
                 </div>
+                <p class="text-xs opacity-60 mt-2">
+                    <strong>Exclusive EKUs:</strong> <em>OCSP signing</em> (RFC 6960) and <em>Time stamping</em> (RFC 3161) must each be the only EKU on their certificate — OCSP clients and TSA verifiers reject responses signed by certs carrying other EKUs. If you need either, give it its own template.
+                </p>
                 {% if form.extended_key_usages.errors %}<p class="text-error text-xs mt-1">{{ form.extended_key_usages.errors|join:" " }}</p>{% endif %}
             </div>
 

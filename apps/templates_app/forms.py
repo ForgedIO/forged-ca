@@ -104,4 +104,29 @@ class CertTemplateForm(forms.ModelForm):
             raise forms.ValidationError("Default lifetime can't exceed the maximum.")
         if mn > mx:
             raise forms.ValidationError("Minimum can't exceed maximum.")
+
+        # RFC-mandated EKU exclusivity: a few EKUs must be the only EKU on
+        # their cert because validators (OCSP clients, TSA verifiers) refuse
+        # to trust responses signed by a cert carrying additional EKUs.
+        # Counts include custom OIDs — putting OCSP signing next to a custom
+        # OID violates the same rule.
+        ekus = set(cleaned.get("extended_key_usages") or [])
+        custom = cleaned.get("custom_eku_oids") or []
+        total_count = len(ekus) + len(custom)
+        if "OCSPSigning" in ekus and total_count > 1:
+            raise forms.ValidationError(
+                "OCSP signing must be the only EKU on its certificate "
+                "(RFC 6960 §4.2.2.2 — OCSP clients reject responses signed "
+                "by certs carrying other EKUs). Uncheck the other EKUs and "
+                "clear any custom OIDs, or move OCSP signing into its own "
+                "dedicated template."
+            )
+        if "timeStamping" in ekus and total_count > 1:
+            raise forms.ValidationError(
+                "Time stamping must be the only EKU on its certificate "
+                "(RFC 3161 §2.3 — the EKU extension must be critical and "
+                "contain only timeStamping; TSA verifiers reject the rest). "
+                "Uncheck the other EKUs and clear any custom OIDs, or move "
+                "time stamping into its own dedicated template."
+            )
         return cleaned
