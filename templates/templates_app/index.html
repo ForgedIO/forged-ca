@@ -63,10 +63,10 @@
         </div>
     </div>
 
-    <div class="alert alert-info">
+    <div class="alert alert-success">
         <div>
-            <strong>Slice 3.7 — declared policy, deferred enforcement.</strong>
-            <div class="text-sm opacity-80 mt-1">EKU + Key Usage allowlists are stored and editable here, and the seeded Web Server template ships with serverAuth + clientAuth. ACME and SCEP issuance still fall back to step-ca's per-provisioner defaults until Slice 4 wires the template policy into the step-ca renderer — treat the EKU/KU values as declared intent until then. Subject DN policy and SAN name-constraints ship in a later slice.</div>
+            <strong>Slice 3.7 — enforced on ACME.</strong>
+            <div class="text-sm opacity-80 mt-1">EKU + Key Usage are now hardcoded into step-ca's per-provisioner certificate template, so every ACME-issued cert carries exactly the bits declared here regardless of what the CSR asks for. Editing a template rewrites ca.json and reloads step-ca, so the new policy applies on the next issuance. SCEP enforcement arrives with Slice 3.5; manual CSR signing inherits the same policy in Slice 4. Subject DN policy and SAN name-constraints ship later.</div>
         </div>
     </div>
 </div>

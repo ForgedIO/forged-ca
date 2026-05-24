@@ -101,7 +101,7 @@
             </div>
 
             <div class="alert alert-info text-sm">
-                <span><strong>Heads up:</strong> EKU/KU are stored and surfaced now, but not yet <em>enforced</em> at issuance — ACME and SCEP still fall back to step-ca's defaults. Enforcement ships with Slice 4. Treat these as declared policy until then.</span>
+                <span><strong>Enforcement is live for ACME.</strong> Saving this template rewrites step-ca's ca.json and reloads the daemon — from the next ACME issuance onwards, this provisioner's certs carry exactly these EKU and KU bits, regardless of what the CSR asks for. SCEP enforcement lands when Slice 3.5 ships the SCEP provisioner; manual CSR signing inherits the same policy when Slice 4 lands.</span>
             </div>
 
             <div class="flex justify-end gap-2 pt-2">

@@ -97,7 +97,14 @@ class ACMEProvisioner(models.Model):
         return self.template or CertTemplate.load_default()
 
     def to_ca_json(self) -> dict:
-        """Serialise for step-ca's authority.provisioners[] array."""
+        """Serialise for step-ca's authority.provisioners[] array.
+
+        The `options.x509.template` field pins this provisioner's bound
+        template's EKU + KU on every issued cert (Slice 3.7 enforcement).
+        step-ca evaluates the Go-templated JSON per issuance, so Subject
+        and SANs still come from the CSR, but EKU/KU are written from
+        the template regardless of what the CSR asked for.
+        """
         t = self.effective_template()
         return {
             "type": "ACME",
@@ -107,6 +114,11 @@ class ACMEProvisioner(models.Model):
                 "defaultTLSCertDuration": f"{t.default_lifetime_hours}h",
                 "minTLSCertDuration":     f"{t.min_lifetime_hours}h",
                 "maxTLSCertDuration":     f"{t.max_lifetime_hours}h",
+            },
+            "options": {
+                "x509": {
+                    "template": t.to_step_ca_x509_template(),
+                },
             },
             "challenges": self.active_challenges(),
         }

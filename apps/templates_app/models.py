@@ -202,8 +202,10 @@ class CertTemplate(models.Model):
         blank=True,
         help_text="What this certificate is allowed to be used for. Stored "
                   "as OpenSSL-style short names (e.g. 'serverAuth', "
-                  "'clientAuth'). Enforcement at issuance lands with "
-                  "Slice 4 — declared policy only for now.",
+                  "'clientAuth'). Enforced at issuance — step-ca writes "
+                  "exactly these EKU bits on every cert it issues against "
+                  "any provisioner bound to this template, regardless of "
+                  "what the CSR requests.",
     )
     key_usages = models.JSONField(
         default=list,
@@ -257,6 +259,40 @@ class CertTemplate(models.Model):
             raise ValidationError("Default lifetime cannot exceed the maximum.")
         if self.min_lifetime_days > self.max_lifetime_days:
             raise ValidationError("Minimum cannot exceed maximum.")
+
+    def to_step_ca_x509_template(self) -> str:
+        """Render the step-ca x509 certificate template that pins this
+        template's EKU + KU on every cert issued through any provisioner
+        bound to it.
+
+        step-ca evaluates this string per issuance: `.Subject` and `.SANs`
+        come from the CSR (so the issued cert still reflects what the
+        client asked for), but keyUsage and extKeyUsage are hardcoded —
+        the CA writes the template's allowlist regardless of what the CSR
+        requested. That's the enforcement: a misbehaving client can't
+        sneak codeSigning into a "web server" template.
+
+        Custom OIDs land in extKeyUsage alongside the named ones; step-ca
+        accepts both dotted-OID strings and named shortcuts in the same
+        array. If both lists are empty (template hasn't been edited),
+        emit a minimal template that just forwards Subject + SANs — step-ca
+        will fall back to its own defaults.
+        """
+        import json as _json
+
+        ekus = list(self.extended_key_usages) + list(self.custom_eku_oids)
+        kus = list(self.key_usages)
+
+        parts = [
+            '"subject": {{ toJson .Subject }}',
+            '"sans": {{ toJson .SANs }}',
+        ]
+        if kus:
+            parts.append(f'"keyUsage": {_json.dumps(kus)}')
+        if ekus:
+            parts.append(f'"extKeyUsage": {_json.dumps(ekus)}')
+
+        return "{\n  " + ",\n  ".join(parts) + "\n}"
 
     @classmethod
     def load_default(cls) -> "CertTemplate":
