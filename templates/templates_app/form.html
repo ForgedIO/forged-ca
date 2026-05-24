@@ -57,6 +57,12 @@
             <div class="divider my-1"></div>
 
             <div>
+                <label class="label"><span class="label-text font-medium">Quick pick — use case</span></label>
+                {{ form.use_case }}
+                <p class="text-xs opacity-60 mt-1">{{ form.use_case.help_text }}</p>
+            </div>
+
+            <div>
                 <label class="label"><span class="label-text font-medium">Extended Key Usage (EKU)</span></label>
                 <p class="text-xs opacity-60 mt-0 mb-2">{{ form.extended_key_usages.help_text }}</p>
                 <div class="grid gap-2 sm:grid-cols-2">
@@ -105,4 +111,27 @@
         </div>
     </form>
 </div>
+
+{{ use_case_presets|json_script:"use-case-presets" }}
+<script>
+(function () {
+    const presetsEl = document.getElementById("use-case-presets");
+    const useCaseEl = document.getElementById("id_use_case");
+    if (!presetsEl || !useCaseEl) return;
+    const presets = JSON.parse(presetsEl.textContent);
+
+    useCaseEl.addEventListener("change", function (e) {
+        const preset = presets[e.target.value];
+        if (!preset) return;  // empty option — admin is going manual
+        const ekuSet = new Set(preset.eku);
+        const kuSet  = new Set(preset.ku);
+        document.querySelectorAll('input[name="extended_key_usages"]').forEach(function (cb) {
+            cb.checked = ekuSet.has(cb.value);
+        });
+        document.querySelectorAll('input[name="key_usages"]').forEach(function (cb) {
+            cb.checked = kuSet.has(cb.value);
+        });
+    });
+})();
+</script>
 {% endblock %}

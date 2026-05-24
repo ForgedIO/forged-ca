@@ -37,6 +37,63 @@ EKU_SHORT_LABELS = {
     "ipsecIKE":         "IPsec",
 }
 
+# One-click use-case presets that autofill the right EKU + KU combo for the
+# admin. Picking a use case from the dropdown in the form overwrites the
+# checkbox state via inline JS. Single source of truth for both the
+# dropdown options and the JS autofill payload.
+#
+# Pairings follow common practice: RSA-friendly KU (digitalSignature +
+# keyEncipherment) for TLS, ECDH-friendly KU (digitalSignature +
+# keyAgreement) for IPsec / VPN, contentCommitment for time stamping
+# (non-repudiation is the whole point of a TSA cert).
+USE_CASE_PRESETS = {
+    "web_server": {
+        "label": "Web server (TLS — server + client auth)",
+        "eku":   ["serverAuth", "clientAuth"],
+        "ku":    ["digitalSignature", "keyEncipherment"],
+    },
+    "tls_server_only": {
+        "label": "TLS server only (no client auth)",
+        "eku":   ["serverAuth"],
+        "ku":    ["digitalSignature", "keyEncipherment"],
+    },
+    "client_auth": {
+        "label": "Client authentication (mTLS / VPN / 802.1X)",
+        "eku":   ["clientAuth"],
+        "ku":    ["digitalSignature", "keyAgreement"],
+    },
+    "code_signing": {
+        "label": "Code signing",
+        "eku":   ["codeSigning"],
+        "ku":    ["digitalSignature"],
+    },
+    "email_smime": {
+        "label": "Email (S/MIME — sign and encrypt)",
+        "eku":   ["emailProtection"],
+        "ku":    ["digitalSignature", "keyEncipherment"],
+    },
+    "smartcard_logon": {
+        "label": "Smart card logon (Microsoft AD)",
+        "eku":   ["clientAuth", "msSmartcardLogon"],
+        "ku":    ["digitalSignature", "keyEncipherment"],
+    },
+    "ipsec_endpoint": {
+        "label": "IPsec endpoint",
+        "eku":   ["ipsecIKE"],
+        "ku":    ["digitalSignature", "keyAgreement"],
+    },
+    "ocsp_responder": {
+        "label": "OCSP responder (exclusive — RFC 6960)",
+        "eku":   ["OCSPSigning"],
+        "ku":    ["digitalSignature"],
+    },
+    "tsa": {
+        "label": "Time stamping authority (exclusive — RFC 3161)",
+        "eku":   ["timeStamping"],
+        "ku":    ["digitalSignature", "contentCommitment"],
+    },
+}
+
 
 class CertTemplate(models.Model):
     """Reusable certificate-issuance policy: lifetime bounds plus an EKU/KU
