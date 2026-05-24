@@ -47,6 +47,7 @@ EKU_SHORT_LABELS = {
 # keyAgreement) for IPsec / VPN, contentCommitment for time stamping
 # (non-repudiation is the whole point of a TSA cert).
 USE_CASE_PRESETS = {
+    # ── TLS / Web servers ──────────────────────────────────────────────
     "web_server": {
         "label": "Web server (TLS — server + client auth)",
         "eku":   ["serverAuth", "clientAuth"],
@@ -57,11 +58,35 @@ USE_CASE_PRESETS = {
         "eku":   ["serverAuth"],
         "ku":    ["digitalSignature", "keyEncipherment"],
     },
+    "radius_server": {
+        "label": "RADIUS server (EAP-TLS — NPS / FreeRADIUS / Cisco ISE / ClearPass)",
+        "eku":   ["serverAuth"],
+        "ku":    ["digitalSignature", "keyEncipherment"],
+    },
+    "guest_portal": {
+        "label": "Guest / captive portal (Cisco ISE, Aruba ClearPass, Meraki, FortiGate)",
+        "eku":   ["serverAuth", "clientAuth"],
+        "ku":    ["digitalSignature", "keyEncipherment"],
+    },
+    "server_to_server_mtls": {
+        "label": "Server-to-server mutual TLS (Cisco pxGrid, service mesh, internal API)",
+        "eku":   ["serverAuth", "clientAuth"],
+        "ku":    ["digitalSignature", "keyEncipherment"],
+    },
+
+    # ── Identity / Authentication ──────────────────────────────────────
     "client_auth": {
-        "label": "Client authentication (mTLS / VPN / 802.1X)",
+        "label": "Client authentication (mTLS / 802.1X supplicant / API client)",
         "eku":   ["clientAuth"],
         "ku":    ["digitalSignature", "keyAgreement"],
     },
+    "smartcard_logon": {
+        "label": "Smart card logon — Microsoft AD (also covers 802.1X EAP-TLS)",
+        "eku":   ["clientAuth", "msSmartcardLogon"],
+        "ku":    ["digitalSignature", "keyEncipherment"],
+    },
+
+    # ── Code & Email ───────────────────────────────────────────────────
     "code_signing": {
         "label": "Code signing",
         "eku":   ["codeSigning"],
@@ -72,16 +97,25 @@ USE_CASE_PRESETS = {
         "eku":   ["emailProtection"],
         "ku":    ["digitalSignature", "keyEncipherment"],
     },
-    "smartcard_logon": {
-        "label": "Smart card logon (Microsoft AD)",
-        "eku":   ["clientAuth", "msSmartcardLogon"],
-        "ku":    ["digitalSignature", "keyEncipherment"],
+
+    # ── VPN / IPsec ────────────────────────────────────────────────────
+    "vpn_server_ikev2": {
+        "label": "VPN server / IKEv2 gateway (StrongSwan, libreswan, Cisco ASA)",
+        "eku":   ["serverAuth", "ipsecIKE"],
+        "ku":    ["digitalSignature", "keyEncipherment", "keyAgreement"],
+    },
+    "vpn_client_ikev2": {
+        "label": "VPN client / IKEv2 (remote-access workstation)",
+        "eku":   ["clientAuth", "ipsecIKE"],
+        "ku":    ["digitalSignature", "keyAgreement"],
     },
     "ipsec_endpoint": {
-        "label": "IPsec endpoint",
+        "label": "IPsec site-to-site peer (no server/client role distinction)",
         "eku":   ["ipsecIKE"],
         "ku":    ["digitalSignature", "keyAgreement"],
     },
+
+    # ── Special purpose (exclusive EKUs) ───────────────────────────────
     "ocsp_responder": {
         "label": "OCSP responder (exclusive — RFC 6960)",
         "eku":   ["OCSPSigning"],
@@ -93,6 +127,19 @@ USE_CASE_PRESETS = {
         "ku":    ["digitalSignature", "contentCommitment"],
     },
 }
+
+
+# Optgroup layout for the dropdown — keeps the long list scannable by
+# clustering related use cases. The flat USE_CASE_PRESETS dict above is
+# still the JS autofill source of truth; this list only controls visual
+# grouping in the form's <select>.
+USE_CASE_GROUPS = [
+    ("TLS / Web servers",     ["web_server", "tls_server_only", "radius_server", "guest_portal", "server_to_server_mtls"]),
+    ("Identity / Auth",       ["client_auth", "smartcard_logon"]),
+    ("Code & Email",          ["code_signing", "email_smime"]),
+    ("VPN / IPsec",           ["vpn_server_ikev2", "vpn_client_ikev2", "ipsec_endpoint"]),
+    ("Special purpose",       ["ocsp_responder", "tsa"]),
+]
 
 
 class CertTemplate(models.Model):

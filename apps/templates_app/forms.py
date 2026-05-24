@@ -3,7 +3,18 @@ import re
 from django import forms
 from django.utils.text import slugify
 
-from .models import CertTemplate, EKU_CHOICES, KU_CHOICES, USE_CASE_PRESETS
+from .models import CertTemplate, EKU_CHOICES, KU_CHOICES, USE_CASE_PRESETS, USE_CASE_GROUPS
+
+
+def _grouped_use_case_choices():
+    """Build the ChoiceField choices in (group_label, [(value, label), ...])
+    form so Django renders each cluster as an HTML <optgroup>. Cheaper than
+    a custom widget and standard-compliant."""
+    out = [("", "— Pick a use case to autofill EKU + KU —")]
+    for group_label, keys in USE_CASE_GROUPS:
+        options = [(k, USE_CASE_PRESETS[k]["label"]) for k in keys]
+        out.append((group_label, options))
+    return out
 
 
 # Dotted-OID regex for the "advanced custom OIDs" escape hatch. Permissive
@@ -18,10 +29,7 @@ class CertTemplateForm(forms.ModelForm):
     # KU boxes below to match the preset. Leaving it blank means the admin
     # will set the checkboxes by hand.
     use_case = forms.ChoiceField(
-        choices=(
-            [("", "— Pick a use case to autofill EKU + KU —")]
-            + [(key, preset["label"]) for key, preset in USE_CASE_PRESETS.items()]
-        ),
+        choices=_grouped_use_case_choices(),
         required=False,
         widget=forms.Select(attrs={"class": "select select-bordered w-full", "id": "id_use_case"}),
         help_text="Pick a use case and the EKU/KU checkboxes below will autofill with the right combo. Adjust them after if you need to fine-tune.",
