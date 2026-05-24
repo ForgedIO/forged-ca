@@ -54,6 +54,47 @@
                 </div>
             </div>
 
+            <div class="divider my-1"></div>
+
+            <div>
+                <label class="label"><span class="label-text font-medium">Extended Key Usage (EKU)</span></label>
+                <p class="text-xs opacity-60 mt-0 mb-2">{{ form.extended_key_usages.help_text }}</p>
+                <div class="grid gap-2 sm:grid-cols-2">
+                    {% for choice in form.extended_key_usages %}
+                        <label class="cursor-pointer label justify-start gap-2 py-1">
+                            {{ choice.tag }}
+                            <span class="label-text">{{ choice.choice_label }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+                {% if form.extended_key_usages.errors %}<p class="text-error text-xs mt-1">{{ form.extended_key_usages.errors|join:" " }}</p>{% endif %}
+            </div>
+
+            <div>
+                <label class="label"><span class="label-text font-medium">Custom EKU OIDs (advanced)</span></label>
+                {{ form.custom_eku_oids }}
+                <p class="text-xs opacity-60 mt-1">{{ form.custom_eku_oids.help_text }}</p>
+                {% if form.custom_eku_oids.errors %}<p class="text-error text-xs mt-1">{{ form.custom_eku_oids.errors|join:" " }}</p>{% endif %}
+            </div>
+
+            <div>
+                <label class="label"><span class="label-text font-medium">Key Usage (KU)</span></label>
+                <p class="text-xs opacity-60 mt-0 mb-2">{{ form.key_usages.help_text }}</p>
+                <div class="grid gap-2 sm:grid-cols-2">
+                    {% for choice in form.key_usages %}
+                        <label class="cursor-pointer label justify-start gap-2 py-1">
+                            {{ choice.tag }}
+                            <span class="label-text">{{ choice.choice_label }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+                {% if form.key_usages.errors %}<p class="text-error text-xs mt-1">{{ form.key_usages.errors|join:" " }}</p>{% endif %}
+            </div>
+
+            <div class="alert alert-info text-sm">
+                <span><strong>Heads up:</strong> EKU/KU are stored and surfaced now, but not yet <em>enforced</em> at issuance — ACME and SCEP still fall back to step-ca's defaults. Enforcement ships with Slice 4. Treat these as declared policy until then.</span>
+            </div>
+
             <div class="flex justify-end gap-2 pt-2">
                 <a href="{% url 'templates_app:index' %}" class="btn btn-ghost">Cancel</a>
                 <button type="submit" class="btn btn-primary">{% if mode == "create" %}Create template{% else %}Save and reload step-ca{% endif %}</button>
