@@ -10,11 +10,13 @@
 
     <div class="alert alert-info">
         <div>
-            <strong>Slices 2 + 4 + 7 light this up.</strong>
-            <ul class="list-disc pl-6 mt-2 text-sm space-y-0.5">
-                <li><strong>Slice 2</strong> &mdash; ACME enrollment (servers talk to the Issuing CA via the ACME provisioner and get leaf certs automatically; renewal on a systemd timer)</li>
-                <li><strong>Slice 4</strong> &mdash; non-ACME CSR signing UI (admin uploads a CSR, picks a template, signs; explicit "passthrough" opt-in for bare-CSR signing)</li>
-                <li><strong>Slice 7</strong> &mdash; revocation UI + audit log entries</li>
+            <strong>Certificate issuance is served over ACME today.</strong>
+            <p class="text-sm mt-1">Servers enroll against this node's ACME provisioner and renew themselves on a timer &mdash; see <a href="{% url 'acme:index' %}" class="link">ACME</a> for setup snippets. This page becomes the search-and-manage view for what those enrollments produced.</p>
+            <p class="text-sm mt-2 opacity-80">Still on the roadmap:</p>
+            <ul class="list-disc pl-6 mt-1 text-sm space-y-0.5 opacity-80">
+                <li>Manual CSR signing &mdash; upload a CSR, pick a template, sign, with an explicit &ldquo;passthrough&rdquo; opt-in for one-off expert work</li>
+                <li>Searchable list of issued certificates</li>
+                <li>Revocation, with matching audit-log entries</li>
             </ul>
         </div>
     </div>

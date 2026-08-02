@@ -5,12 +5,12 @@
 <div class="space-y-6">
     <div>
         <h1 class="text-2xl font-bold">ACME issuance</h1>
-        <p class="text-sm opacity-70 mt-1">step-ca's ACME API issues short-lived leaves to anything that speaks the protocol &mdash; <code class="font-mono">step</code>, <code class="font-mono">certbot</code>, <code class="font-mono">acme.sh</code>, cert-manager, Traefik, Caddy, nginx. Configure the provisioner here; copy-paste client commands arrive in the next slice.</p>
+        <p class="text-sm opacity-70 mt-1">step-ca's ACME API issues short-lived leaves to anything that speaks the protocol &mdash; <code class="font-mono">step</code>, <code class="font-mono">certbot</code>, <code class="font-mono">acme.sh</code>, cert-manager, Traefik, Caddy, nginx. Configure the provisioner here, then head to <a href="{% url 'acme:onboarding' %}" class="link">Client onboarding</a> for copy-paste setup commands.</p>
     </div>
 
     {% if not config.is_issuing %}
         <div class="alert alert-warning">
-            <span>This node doesn't have an Issuing CA role, so ACME isn't served here. Deploy an Issuing CA and federate it to this node &mdash; that's slice 3.</span>
+            <span>This node doesn't have an Issuing CA role, so ACME isn't served here. ACME is served by Issuing CAs only &mdash; either re-run the wizard on this node with the Issuing role enabled, or stand up a separate Issuing CA. Joining a separate Issuing CA to this node arrives with federation.</span>
         </div>
     {% else %}
 

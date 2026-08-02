@@ -214,39 +214,39 @@
     {# ── Stub: HTTPS port ─────────────────────────────────────────── #}
     <div class="card bg-base-100 shadow">
         <div class="card-body">
-            <h2 class="card-title text-base">HTTPS port <span class="badge">Slice 4.5</span></h2>
-            <p class="text-sm opacity-70 mt-0">Currently <code class="font-mono">{{ config.hostname|default:"this node" }}:8443</code>. Live port-change (8443 &rarr; 443 or any other) with graceful nginx reconfig lands in the Settings slice.</p>
+            <h2 class="card-title text-base">HTTPS port <span class="badge">Coming soon</span></h2>
+            <p class="text-sm opacity-70 mt-0">Currently <code class="font-mono">{{ config.hostname|default:"this node" }}:8443</code>. Changing the port here &mdash; 8443 &rarr; 443 or any other &mdash; with a graceful nginx reconfig is on the roadmap.</p>
         </div>
     </div>
 
     {# ── Stub: Trust-download auth ────────────────────────────────── #}
     <div class="card bg-base-100 shadow">
         <div class="card-body">
-            <h2 class="card-title text-base">Trust-download auth <span class="badge">Slice 4.5</span></h2>
-            <p class="text-sm opacity-70 mt-0">Currently <strong>{% if config.trust_download_requires_auth %}Require admin login{% else %}Public (unauthenticated)<!-- default --> — OK for GPO / Intune / Ansible unattended pulls{% endif %}</strong>. Toggle UI comes with the Settings slice.</p>
+            <h2 class="card-title text-base">Trust-download auth <span class="badge">Coming soon</span></h2>
+            <p class="text-sm opacity-70 mt-0">Currently <strong>{% if config.trust_download_requires_auth %}Require admin login{% else %}Public (unauthenticated)<!-- default --> — OK for GPO / Intune / Ansible unattended pulls{% endif %}</strong>. A toggle for this is on the roadmap.</p>
         </div>
     </div>
 
     {# ── Stub: Authentication ─────────────────────────────────────── #}
     <div class="card bg-base-100 shadow">
         <div class="card-body">
-            <h2 class="card-title text-base">Authentication <span class="badge">Slice 10</span></h2>
-            <p class="text-sm opacity-70 mt-0">Currently <strong>local accounts only</strong>. LDAP, Entra ID, generic SAML 2.0, generic OIDC, and Duo Universal Prompt (layered MFA) all get their config screens in the IdP slice.</p>
+            <h2 class="card-title text-base">Authentication <span class="badge">Coming soon</span></h2>
+            <p class="text-sm opacity-70 mt-0">Currently <strong>local accounts only</strong>. LDAP, Entra ID, generic SAML 2.0, generic OIDC, and Duo Universal Prompt (layered MFA) each get a config screen on the roadmap.</p>
         </div>
     </div>
 
     {# ── Stub: Email ──────────────────────────────────────────────── #}
     <div class="card bg-base-100 shadow">
         <div class="card-body">
-            <h2 class="card-title text-base">Email <span class="badge">Slice 8</span></h2>
-            <p class="text-sm opacity-70 mt-0">SMTP + Microsoft Graph API backends with live test-send, password-reset emails, and the MFA email-recovery bypass all land in the email slice.</p>
+            <h2 class="card-title text-base">Email <span class="badge">Coming soon</span></h2>
+            <p class="text-sm opacity-70 mt-0">SMTP and Microsoft Graph API backends with a live test-send, password-reset emails, and the MFA email-recovery bypass are on the roadmap.</p>
         </div>
     </div>
 
     {# ── Stub: Syslog ─────────────────────────────────────────────── #}
     <div class="card bg-base-100 shadow">
         <div class="card-body">
-            <h2 class="card-title text-base">Syslog forwarding <span class="badge">Slice 9</span></h2>
+            <h2 class="card-title text-base">Syslog forwarding <span class="badge">Coming soon</span></h2>
             <p class="text-sm opacity-70 mt-0">DB-driven destination + severity threshold. Default logging is file-only at <code class="font-mono text-xs">/var/log/forgedca/django.log</code>.</p>
         </div>
     </div>
@@ -254,7 +254,7 @@
     {# ── Stub: Admin users ────────────────────────────────────────── #}
     <div class="card bg-base-100 shadow">
         <div class="card-body">
-            <h2 class="card-title text-base">Admin users <span class="badge">Slice 4.5</span></h2>
+            <h2 class="card-title text-base">Admin users <span class="badge">Coming soon</span></h2>
             <p class="text-sm opacity-70 mt-0">Add / remove admin accounts, reset passwords, force-rotate MFA. The initial admin was created by install.sh; extra admins can be added via the Django admin at <a href="/admin/" class="link">/admin/</a> for now.</p>
         </div>
     </div>

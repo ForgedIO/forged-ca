@@ -1,6 +1,6 @@
 # ForgedCA
 
-**Version 0.1.0-alpha** — scaffold only, not yet runnable end-to-end
+**Version 0.2.0-alpha** — single-node CA, ACME issuance, and cert templates are working; federation not started
 
 > **To update an existing install:** `git pull origin main && sudo ./update.sh`
 
@@ -14,7 +14,23 @@ Made by **[ForgedIO](https://github.com/ForgedIO)**.
 
 ## Status
 
-**Day 1 of development.** The repo currently contains the full project scaffold, installer, and deploy templates. The Django apps are stubbed — no working web UI yet. See [`docs/roadmap.md`](docs/roadmap.md) for v1 scope and milestones.
+**Alpha — single-node PKI works end to end.** Install, log in, enroll MFA, run the wizard, and you have a working Root → Intermediate → Issuing chain issuing certs over ACME. Not production-ready: no revocation UI, no audit log, no email or external IdPs, and federation is still ahead of us.
+
+**Working today**
+
+- Install wizard — pick Root / Intermediate / Issuing (any combination) and bootstrap the full chain on one box
+- Forced password change plus TOTP MFA enrollment with recovery codes on first login
+- The wizard issues the admin UI's own leaf cert and swaps nginx onto it, so installing the Root turns the lock green on this very UI
+- Trust-chain and per-cert PEM download, with an inline viewer and copy button on every pane
+- step-ca daemon lifecycle from Settings — start / stop / status with an in-UI log tail
+- ACME provisioners, managed from the UI and written straight into step-ca's `ca.json`
+- ACME client onboarding page with ready-to-paste snippets for `step`, `certbot`, `acme.sh`, cert-manager, Traefik, Caddy, and nginx
+- Certificate templates — CRUD, per-provisioner binding, lifetime bounds, and an EKU / Key Usage policy that step-ca enforces on every issued cert
+- Light / dark theme
+
+**Not built yet:** SCEP, manual CSR signing, trust-store distribution kits (GPO / Intune / `.mobileconfig`), DNS-01, dashboard rollups, revocation UI, audit log, email, syslog, external IdPs, and all federation.
+
+See [`docs/roadmap.md`](docs/roadmap.md) for the full slice sequence and [`docs/CHANGELOG.md`](docs/CHANGELOG.md) for per-release detail.
 
 ## Vision
 

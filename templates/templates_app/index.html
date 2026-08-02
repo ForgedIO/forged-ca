@@ -65,8 +65,8 @@
 
     <div class="alert alert-success">
         <div>
-            <strong>Slice 3.7 — enforced on ACME.</strong>
-            <div class="text-sm opacity-80 mt-1">EKU + Key Usage are now hardcoded into step-ca's per-provisioner certificate template, so every ACME-issued cert carries exactly the bits declared here regardless of what the CSR asks for. Editing a template rewrites ca.json and reloads step-ca, so the new policy applies on the next issuance. SCEP enforcement arrives with Slice 3.5; manual CSR signing inherits the same policy in Slice 4. Subject DN policy and SAN name-constraints ship later.</div>
+            <strong>These policies are enforced on every ACME-issued certificate.</strong>
+            <div class="text-sm opacity-80 mt-1">EKU and Key Usage are written into step-ca's certificate template for each provisioner, so every cert carries exactly the bits declared here &mdash; regardless of what the requesting client asks for. Saving a template rewrites step-ca's config and reloads it, so the new policy applies from the next issuance onwards. SCEP and manual CSR signing will inherit the same policy when they land; Subject DN policy and SAN name-constraints come later.</div>
         </div>
     </div>
 </div>

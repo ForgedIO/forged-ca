@@ -152,11 +152,11 @@ class CertTemplate(models.Model):
     template's defaults propagates to every provisioner bound to it at
     the next render.
 
-    Note on enforcement: the EKU/KU fields are stored and surfaced in the
-    UI today, but are not yet enforced at issuance — ACME and SCEP fall
-    back to step-ca's per-provisioner defaults until Slice 4 lands the
-    step-ca template renderer wiring. Treat them as declared policy
-    until then.
+    Note on enforcement: EKU/KU are enforced for ACME today. Each ACME
+    provisioner emits `options.x509.template` from
+    `to_step_ca_x509_template()`, so step-ca writes exactly the bits
+    declared here regardless of what the CSR requests. SCEP inherits the
+    same path when Slice 3.5 lands; manual CSR signing when Slice 4 does.
     """
     DEFAULT_SLUG = "web-server"
 

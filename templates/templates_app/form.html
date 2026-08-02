@@ -101,7 +101,7 @@
             </div>
 
             <div class="alert alert-info text-sm">
-                <span><strong>Enforcement is live for ACME.</strong> Saving this template rewrites step-ca's ca.json and reloads the daemon — from the next ACME issuance onwards, this provisioner's certs carry exactly these EKU and KU bits, regardless of what the CSR asks for. SCEP enforcement lands when Slice 3.5 ships the SCEP provisioner; manual CSR signing inherits the same policy when Slice 4 lands.</span>
+                <span><strong>Enforcement is live for ACME.</strong> Saving this template rewrites step-ca's <code class="font-mono">ca.json</code> and reloads the daemon &mdash; from the next ACME issuance onwards, certs from any provisioner bound to this template carry exactly these EKU and KU bits, regardless of what the requesting client asks for. SCEP and manual CSR signing will inherit the same policy when they land.</span>
             </div>
 
             <div class="flex justify-end gap-2 pt-2">
