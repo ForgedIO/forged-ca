@@ -259,9 +259,18 @@ Styling: **CSS-first.** New patterns go in `static/css/app.src.css` under
 
 ## Tests
 
-`tests/` is currently **empty** — there is no suite and nothing runs one. Slice 4
-establishes it. Use Django's built-in test runner (`manage.py test`); do not add pytest
-without discussing it.
+**Read the `test-forgedca` skill first** (`.claude/skills/test-forgedca/`). It covers the
+three middleware gates that will otherwise make a smoke test pass against redirects, the
+fixture needed to clear them, and how to enumerate every URL.
+
+`tests/` is currently **empty** — Slice 4 establishes the suite. The harness exists:
+
+```bash
+DJANGO_SETTINGS_MODULE=forgedca.settings.test python3 manage.py test
+```
+
+That runs on in-memory SQLite, so it works without Postgres. Use Django's built-in test
+runner; do not add pytest without discussing it.
 
 Minimum coverage:
 
