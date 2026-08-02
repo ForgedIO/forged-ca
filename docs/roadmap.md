@@ -6,6 +6,44 @@ This document tracks **how** ForgedCA is being built, not just **what**. Work is
 
 Every feature in v1 lands in its single-node form (Root + Intermediate + Issuing on one box) **before** we start building the federation protocol. This keeps us from multiplying CA-level bugs across three boxes. Once every user-facing feature works on one node, the federation slices split the roles across multiple nodes.
 
+## Slice status at a glance
+
+**This table is the single source of truth for what's done and what remains.** Detailed
+scope for each slice follows below; per-commit history is in `docs/CHANGELOG.md`.
+
+*Last updated: 2026-08-02 — 8 shipped, 17 remaining.*
+
+| Slice | Title | Status |
+|---|---|---|
+| 1 | Login + wizard + Root/Intermediate/Issuing chain + trust downloads | ✅ Shipped |
+| 1.5 | Forced password change + TOTP MFA with recovery codes | ✅ Shipped |
+| — | Architecture refactor (one view per file, CBVs, `helpers/`) | ✅ Shipped |
+| 1.7 | Admin UI signs its own leaf cert; inline PEM viewer | ✅ Shipped |
+| 1.8 | Left sidebar IA + dedicated page per menu item | ✅ Shipped |
+| 2 | step-ca daemon lifecycle (2A), ACME provisioner + ca.json (2B), client onboarding snippets (2C) | ✅ Shipped |
+| 3 | Cert templates: CRUD + per-provisioner binding | ✅ Shipped |
+| 3.5 | SCEP provisioner + onboarding page | ⬜ Not started *(skipped over to do 3.7)* |
+| 3.7 | EKU / Key Usage policy on templates, enforced on ACME | ✅ Shipped |
+| **4** | **Non-ACME CSR signing UI** | ⬜ **Next up** — spec'd in [`slice-4-spec.md`](slice-4-spec.md) |
+| 4.5 | Settings: HTTPS port, trust-download auth, admin users, node rename | ⬜ Not started |
+| 5 | Trust-store distribution kits (Windows / macOS / Linux / Firefox / GPO / Intune) | ⬜ Not started |
+| 5.5 | DNS-01 helper (acme-dns style forwarder) | ⬜ Not started |
+| 5.7 | Self-ACME for ForgedCA's own Web UI cert | ⬜ Not started |
+| 6 | Local dashboard: rollups, recent issuances, sparkline | ⬜ Not started |
+| 7 | Revocation UI + per-node append-only audit log | ⬜ Not started |
+| 8 | Email backends (SMTP + MS Graph), password reset, MFA email recovery | ⬜ Not started |
+| 9 | Syslog forwarder settings | ⬜ Not started |
+| 10 | IdPs: LDAP, Entra ID, SAML 2.0, OIDC, Duo | ⬜ Not started |
+| 11 | Federation bootstrap: mTLS CA, join-as-Intermediate | ⬜ Not started |
+| 12 | Join-as-Issuing + live-aggregation dashboard | ⬜ Not started |
+| 13 | Cert-template push-up + Intermediate ↔ Intermediate peering | ⬜ Not started |
+| 14 | Offline Root ceremony (air-gapped, CSR-over-USB) | ⬜ Not started |
+| 15 | Role-gated nav polish, help system, dark-mode sweep, screenshots | ⬜ Not started |
+| 16 | Crypto agility: key-type / signature-algorithm choice, PQC-ready slot | ⬜ Not started |
+
+**When a slice lands, update this table *and* its detail entry below.** Two places, on
+purpose — the table is what gets read first, the detail is what gets worked from.
+
 ## Slice sequence
 
 Each slice is one testable deliverable. Check `docs/CHANGELOG.md` for per-commit detail.

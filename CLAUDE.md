@@ -2,6 +2,22 @@
 
 Open-source ACME PKI platform built on [step-ca](https://smallstep.com/docs/step-ca/). Published by **ForgedIO** at https://github.com/ForgedIO/forged-ca.
 
+## Where things stand — read this first
+
+Work is tracked as numbered **slices**. Two documents answer "what's done, what's left":
+
+| Question | Document |
+|---|---|
+| **Which slices are complete / remaining?** | **[`docs/roadmap.md`](docs/roadmap.md)** — the status table at the top is the single source of truth |
+| What changed, per release? | [`docs/CHANGELOG.md`](docs/CHANGELOG.md) |
+| What is the next slice, in detail? | [`docs/slice-4-spec.md`](docs/slice-4-spec.md) |
+
+**If you're asked to summarise slice status, read `docs/roadmap.md` — do not infer it from git log or from this file.**
+
+As of 2026-08-02: slices 1 → 3.7 are shipped. A single node installs, runs the wizard, generates a Root → Intermediate → Issuing chain, and issues certs over ACME with EKU/KU policy enforced. **Slice 4** (non-ACME CSR signing) is next and is fully spec'd. Slice 3.5 (SCEP) was skipped over and is still open. Federation has not started.
+
+Testbed: `cday@192.168.1.172` (hostname `RootCA`). Deploy with `cd ~/forged-ca && sudo ./update.sh`.
+
 ## What we're building
 
 A dramatically simpler alternative to Microsoft ADCS for on-prem private PKI. The bar is "a non-PKI-expert admin can stand up a working multi-tier CA and distribute trust to their fleet in under an hour."
@@ -24,9 +40,11 @@ A dramatically simpler alternative to Microsoft ADCS for on-prem private PKI. Th
 
 - **Backend CA engine:** step-ca (do not reimplement — we're an opinionated installer + orchestrator + UI on top of it)
 - **Reverse proxy / TLS terminator:** nginx
-- **Web platform:** TBD (to be decided — evaluate based on ops simplicity, not developer fashion)
-- **Database:** TBD (needs to handle PKI state, federation coordination, audit/revocation records)
-- **Installer:** a single `install.sh` that provisions everything above end-to-end
+- **Web platform:** Django 4.2 + HTMX, served by Gunicorn (`forgedca-gunicorn.service`)
+- **UI:** Tailwind CSS + DaisyUI (see the styling section below)
+- **Database:** PostgreSQL — two logical DBs on one cluster, `forgedca` (app state) and `step_ca` (step-ca's own state)
+- **Task queue:** Celery + Redis
+- **Installer:** a single `install.sh` that provisions everything above end-to-end; `update.sh` redeploys, `uninstall.sh` removes
 
 ## Design principles
 
@@ -58,22 +76,45 @@ Apply this every time. Tailwind class churn in templates is a sign the fix belon
 
 ## Repo layout
 
-Early stage — only `README.md`, `.gitignore`, and this file exist. Expected top-level layout once scaffolded (subject to change when stack is picked):
-
 ```
 forged-ca/
-├── install.sh          # one-shot installer
-├── cmd/ or src/        # application code
-├── web/                # dashboard + install wizard frontend
-├── migrations/         # database schema
-├── deploy/             # nginx templates, systemd units, etc.
-├── docs/
+├── install.sh / update.sh / uninstall.sh
+├── manage.py
+├── forgedca/           # Django project — settings/{base,production,dev}.py, celery, wsgi
+├── apps/               # one Django app per domain (see below)
+├── templates/          # Django templates, one directory per app
+├── static/             # css/app.src.css → css/app.css (built), img, js
+├── deploy/             # nginx / systemd / postgres templates
+├── docs/               # roadmap.md, CHANGELOG.md, slice specs
+├── help/               # per-page help markdown (empty — Slice 15)
+├── tests/              # test suite (empty — Slice 4 establishes it)
 └── scripts/
 ```
 
+**Apps:** `core`, `wizard`, `authconfig`, `emailconfig`, `nodes`, `ca`, `federation`,
+`issuance`, `acme`, `templates_app`, `trust`, `dashboard`, `ceremony`, `truststore`,
+`auditlog`. Several are still AppConfig-only stubs awaiting their slice.
+
+**Per-app layout** (established convention — follow it):
+
+```
+apps/<app>/
+├── models.py           # single file
+├── forms.py            # single file
+├── urls.py             # imports view classes from views/
+├── views/
+│   ├── __init__.py     # re-exports every view class
+│   └── <one_page>.py   # exactly one class-based view per file
+└── helpers/
+    └── <topic>.py      # free functions; the real logic lives here
+```
+
+Views subclass `django.views.View` (or a generic) with `LoginRequiredMixin`, and keep
+`get()`/`post()` thin. **Every import at the top of the file — never inside a function.**
+
 ## What Claude should help with
 
-- Architecture decisions (web framework, DB choice, federation protocol design)
+- Architecture decisions (federation protocol design; the web framework and DB are settled — Django + PostgreSQL)
 - Writing the installer and systemd/nginx integration
 - Building the install wizard and dashboard
 - Designing the federation handshake between Root / Intermediate / Issuing nodes
@@ -89,4 +130,4 @@ forged-ca/
 
 ## Status
 
-Day 1. No application code yet. Next likely work: pick the web stack and DB, then scaffold the installer and a minimal "Root CA mode" end-to-end before moving to federation.
+See **[Where things stand](#where-things-stand--read-this-first)** at the top of this file, and `docs/roadmap.md` for the full slice table. Don't duplicate slice status here — it goes stale, which is exactly what happened to this section before.
