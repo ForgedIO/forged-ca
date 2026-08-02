@@ -73,3 +73,6 @@ static/css/app.css
 
 # Design scratch
 documents/
+
+# Claude Code — share skills, keep per-machine permission grants local
+.claude/settings.local.json
