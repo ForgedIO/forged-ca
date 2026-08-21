@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+{% block title %}{{ step_label }} &mdash; ForgedCA{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div>
+        <h1 class="text-2xl font-bold">{{ step_label }}</h1>
+        <p class="text-sm opacity-70 mt-1">
+            {% if show_preview %}
+            Review the certificate request and confirm signing
+            {% else %}
+            Paste or upload a Certificate Signing Request (CSR)
+            {% endif %}
+        </p>
+    </div>
+
+    {% if show_preview %}
+    <div class="card">
+        <div class="card-body">
+            <h2 class="card-title">Certificate Request Details</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div class="alert alert-info">
+                    <div>
+                        <strong>Common Name</strong>
+                        <div class="font-mono text-sm mt-1">{{ parsed_csr.common_name|default:"N/A" }}</div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info">
+                    <div>
+                        <strong>Key Type</strong>
+                        <div class="font-mono text-sm mt-1">{{ parsed_csr.key_type }}</div>
+                        {% if parsed_csr.key_size %}
+                        <div class="font-mono text-sm">Key Size: {{ parsed_csr.key_size }} bits</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% if parsed_csr.sans %}
+                <div class="alert alert-info md:col-span-2">
+                    <div>
+                        <strong>Subject Alternative Names</strong>
+                        <ul class="list-disc list-inside font-mono text-sm mt-1">
+                            {% for san in parsed_csr.sans %}
+                            <li>{{ san }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="alert alert-info">
+                    <div>
+                        <strong>Requested EKUs</strong>
+                        <div class="font-mono text-sm mt-1">
+                            {% if parsed_csr.requested_ekus %}
+                            {{ parsed_csr.requested_ekus|join:", " }}
+                            {% else %}
+                            None
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info">
+                    <div>
+                        <strong>Requested KUs</strong>
+                        <div class="font-mono text-sm mt-1">
+                            {% if parsed_csr.requested_kus %}
+                            {{ parsed_csr.requested_kus|join:", " }}
+                            {% else %}
+                            None
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="card">
+        <div class="card-body">
+            <h2 class="card-title">
+                {% if show_preview %}Confirm Certificate Issuance{% else %}Submit Certificate Request{% endif %}
+            </h2>
+            
+            <form method="post" class="space-y-6 mt-4">
+                {% csrf_token %}
+                
+                {% if not show_preview %}
+                <!-- CSR Input Section -->
+                <div class="space-y-4">
+                    <div class="form-control">
+                        <label class="label cursor-pointer">
+                            <span class="label-text mr-4">Input Method</span>
+                            <div class="join">
+                                <input type="radio" name="csr_source" value="paste" checked="checked" class="radio radio-primary" />
+                                <span class="btn btn-sm join-item {% if form.csr_source.value == 'paste' %}btn-active{% endif %}">Paste CSR</span>
+                                <input type="radio" name="csr_source" value="upload" class="radio radio-primary" />
+                                <span class="btn btn-sm join-item {% if form.csr_source.value == 'upload' %}btn-active{% endif %}">Upload File</span>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    {% if form.csr_source.value == 'paste' %}
+                    <div class="form-control">
+                        <label class="label" for="{{ form.csr_paste.id_for_label }}">
+                            <span class="label-text">{{ form.csr_paste.label }}</span>
+                        </label>
+                        {{ form.csr_paste }}
+                        {% if form.csr_paste.errors %}
+                        <div class="alert alert-error mt-2">
+                            <div>
+                                {% for error in form.csr_paste.errors %}
+                                <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <div class="form-control">
+                        <label class="label" for="{{ form.csr_file.id_for_label }}">
+                            <span class="label-text">{{ form.csr_file.label }}</span>
+                        </label>
+                        {{ form.csr_file }}
+                        <p class="label-text-alt mt-1">Accepts .csr or .pem files</p>
+                        {% if form.csr_file.errors %}
+                        <div class="alert alert-error mt-2">
+                            <div>
+                                {% for error in form.csr_file.errors %}
+                                <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                <!-- Template Selection -->
+                <div class="form-control">
+                    <label class="label" for="{{ form.template.id_for_label }}">
+                        <span class="label-text">{{ form.template.label }}</span>
+                    </label>
+                    {{ form.template }}
+                    <p class="label-text-alt mt-1">{{ form.template.help_text }}</p>
+                    {% if form.template.errors %}
+                    <div class="alert alert-error mt-2">
+                        <div>
+                            {% for error in form.template.errors %}
+                            <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Passthrough Option -->
+                {% if show_preview %}
+                <div class="alert alert-warning">
+                    <div>
+                        <strong>Warning: Passthrough Mode</strong>
+                        <p class="text-sm mt-1">
+                            When enabled, this certificate will be signed with the <strong>exact</strong> extensions requested in the CSR,
+                            bypassing template policy (except CA bits are always rejected for safety).
+                        </p>
+                    </div>
+                </div>
+                {% if is_passthrough %}
+                <div class="alert alert-info">
+                    <div>Passthrough mode is <strong>enabled</strong> - certificate will be signed with requested extensions.</div>
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    <div>Standard template policy will be applied.</div>
+                </div>
+                {% endif %}
+                {% else %}
+                {{ form.passthrough }}
+                <label class="label cursor-pointer" for="{{ form.passthrough.id_for_label }}">
+                    <span class="label-text ml-2">{{ form.passthrough.label }}</span>
+                </label>
+                <p class="label-text-alt ml-8">{{ form.passthrough.help_text }}</p>
+                {% endif %}
+                
+                <!-- Validation Errors -->
+                {% if validation_errors %}
+                <div class="alert alert-error">
+                    <div>
+                        <strong>Certificate Request Cannot Be Signed</strong>
+                        <div class="text-sm mt-2 whitespace-pre-line">
+                            {{ validation_errors }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Hidden fields for confirm step -->
+                {% if show_preview %}
+                <input type="hidden" name="csr_pem" value="{{ parsed_csr.pem|escape }}" />
+                <input type="hidden" name="template_id" value="{{ template.id }}" />
+                {% if is_passthrough %}
+                <input type="hidden" name="passthrough" value="1" />
+                {% endif %}
+                {% endif %}
+                
+                <!-- Action Buttons -->
+                <div class="card-actions mt-6">
+                    {% if show_preview %}
+                    <button type="submit" name="action" value="confirm" class="btn btn-primary">
+                        Sign Certificate
+                    </button>
+                    <a href="{% url 'issuance:sign' %}" class="btn btn-ghost">
+                        Cancel
+                    </a>
+                    {% else %}
+                    <button type="submit" class="btn btn-primary">
+                        Preview Request
+                    </button>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

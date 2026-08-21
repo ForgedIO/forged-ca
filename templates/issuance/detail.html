@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block title %}Certificate Details &mdash; {{ certificate.common_name }} &mdash; ForgedCA{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold">Certificate Details</h1>
+            <p class="text-sm opacity-70 mt-1">Certificate {{ certificate.serial }}</p>
+        </div>
+        <div class="flex space-x-2">
+            <a href="{% url 'issuance:download' certificate.pk %}?type=leaf" class="btn btn-primary">
+                Download Leaf
+            </a>
+            <a href="{% url 'issuance:download' certificate.pk %}?type=fullchain" class="btn btn-primary">
+                Download Full Chain
+            </a>
+        </div>
+    </div>
+
+    <!-- Certificate Status -->
+    <div class="alert alert-{{ status_class }}">
+        <div>
+            <strong>Status: {{ status_text }}</strong>
+            {% if certificate.is_expired %}
+            <p class="text-sm mt-1">This certificate expired on {{ certificate.not_after|date:"M d, Y" }}</p>
+            {% elif certificate.is_near_expiry %}
+            <p class="text-sm mt-1">This certificate will expire on {{ certificate.not_after|date:"M d, Y" }}</p>
+            {% else %}
+            <p class="text-sm mt-1">This certificate is valid until {{ certificate.not_after|date:"M d, Y" }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Basic Information -->
+        <div class="card">
+            <div class="card-body">
+                <h2 class="card-title">Basic Information</h2>
+                
+                <div class="space-y-3 mt-4">
+                    <div>
+                        <span class="font-semibold">Common Name:</span>
+                        <div class="font-mono text-sm">{{ certificate.common_name|default:"N/A" }}</div>
+                    </div>
+                    
+                    <div>
+                        <span class="font-semibold">Serial Number:</span>
+                        <div class="font-mono text-sm">{{ certificate.serial }}</div>
+                    </div>
+                    
+                    <div>
+                        <span class="font-semibold">Template:</span>
+                        {% if certificate.template %}
+                        <div>{{ certificate.template.name }}</div>
+                        {% else %}
+                        <span class="badge badge-warning">Passthrough</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <span class="font-semibold">Source:</span>
+                        {% if certificate.source == 'acme' %}
+                        <span class="badge badge-info">ACME</span>
+                        {% else %}
+                        <span class="badge badge-primary">Manual CSR</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <span class="font-semibold">Issued By:</span>
+                        <div>{{ certificate.signed_by.get_full_name|default:certificate.signed_by.username|default:"System" }}</div>
+                    </div>
+                    
+                    <div>
+                        <span class="font-semibold">Issued On:</span>
+                        <div>{{ certificate.created_at|date:"M d, Y H:i:s" }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Certificate Extensions -->
+        <div class="card">
+            <div class="card-body">
+                <h2 class="card-title">Certificate Extensions</h2>
+                
+                <div class="space-y-3 mt-4">
+                    {% if cert_details.sans %}
+                    <div>
+                        <span class="font-semibold">Subject Alternative Names:</span>
+                        <ul class="list-disc list-inside font-mono text-sm mt-1">
+                            {% for san in cert_details.sans %}
+                            <li>{{ san }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    
+                    {% if cert_details.ekus %}
+                    <div>
+                        <span class="font-semibold">Extended Key Usages:</span>
+                        <div class="font-mono text-sm mt-1">{{ cert_details.ekus|join:", " }}</div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if cert_details.kus %}
+                    <div>
+                        <span class="font-semibold">Key Usages:</span>
+                        <div class="font-mono text-sm mt-1">{{ cert_details.kus|join:", " }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Requested vs Issued (if available) -->
+        {% if certificate.csr_pem %}
+        <div class="card lg:col-span-2">
+            <div class="card-body">
+                <h2 class="card-title">Requested vs Issued</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div>
+                        <h3 class="font-semibold mb-2">Requested Extensions (from CSR)</h3>
+                        <div class="alert alert-info">
+                            <div class="text-sm">
+                                <p><strong>Requested EKUs:</strong> {{ certificate.requested_ekus|default:"None" }}</p>
+                                <p><strong>Requested KUs:</strong> {{ certificate.requested_kus|default:"None" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="font-semibold mb-2">Issued Extensions</h3>
+                        <div class="alert alert-success">
+                            <div class="text-sm">
+                                <p><strong>Issued EKUs:</strong> {{ cert_details.ekus|default:"None" }}</p>
+                                <p><strong>Issued KUs:</strong> {{ cert_details.kus|default:"None" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Certificate PEM Viewer -->
+        <div class="card lg:col-span-2">
+            <div class="card-body">
+                <h2 class="card-title">Certificate PEM</h2>
+                
+                <div class="mt-4">
+                    <div class="alert alert-info">
+                        <div class="text-sm">
+                            <p class="mb-2">Click below to view the full certificate in PEM format:</p>
+                            <button class="btn btn-sm btn-primary" onclick="copyPem()">Copy to Clipboard</button>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <div class="text-xs overflow-x-auto whitespace-pre-wrap font-mono bg-base-100 p-4 rounded border border-base-300 max-h-96 overflow-y-auto">
+                            {{ certificate.certificate_pem }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyPem() {
+    const pemText = document.querySelector('.whitespace-pre-wrap').textContent;
+    navigator.clipboard.writeText(pemText).then(() => {
+        alert('Certificate PEM copied to clipboard!');
+    }).catch(err => {
+        alert('Failed to copy: ' + err);
+    });
+}
+</script>
+{% endblock %}

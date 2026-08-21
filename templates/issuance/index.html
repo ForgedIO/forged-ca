@@ -4,21 +4,84 @@
 {% block content %}
 <div class="space-y-6">
     <div>
-        <h1 class="text-2xl font-bold">Certificates</h1>
-        <p class="text-sm opacity-70 mt-1">Issue, search, and revoke leaf certificates signed by this node's Issuing CA.</p>
+        <h1 class="text-2xl font-bold">Issued Certificates</h1>
+        <p class="text-sm opacity-70 mt-1">Manage certificates that have been issued manually or via ACME.</p>
     </div>
 
-    <div class="alert alert-info">
-        <div>
-            <strong>Certificate issuance is served over ACME today.</strong>
-            <p class="text-sm mt-1">Servers enroll against this node's ACME provisioner and renew themselves on a timer &mdash; see <a href="{% url 'acme:index' %}" class="link">ACME</a> for setup snippets. This page becomes the search-and-manage view for what those enrollments produced.</p>
-            <p class="text-sm mt-2 opacity-80">Still on the roadmap:</p>
-            <ul class="list-disc pl-6 mt-1 text-sm space-y-0.5 opacity-80">
-                <li>Manual CSR signing &mdash; upload a CSR, pick a template, sign, with an explicit &ldquo;passthrough&rdquo; opt-in for one-off expert work</li>
-                <li>Searchable list of issued certificates</li>
-                <li>Revocation, with matching audit-log entries</li>
-            </ul>
+    {% if certificates %}
+    <div class="card">
+        <div class="card-body">
+            <div class="overflow-x-auto">
+                <table class="table table-zebra w-full">
+                    <thead>
+                        <tr>
+                            <th>Common Name</th>
+                            <th>Template</th>
+                            <th>Issued</th>
+                            <th>Expires</th>
+                            <th>Status</th>
+                            <th>Serial</th>
+                            <th>Source</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cert in certificates %}
+                        <tr>
+                            <td>
+                                <div class="font-medium">{{ cert.common_name|default:"N/A" }}</div>
+                                {% if cert.is_near_expiry and not cert.is_expired %}
+                                <div class="text-xs text-warning mt-1">⚠️ Near expiry</div>
+                                {% elif cert.is_expired %}
+                                <div class="text-xs text-error mt-1">❌ Expired</div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if cert.template %}
+                                {{ cert.template.name }}
+                                {% else %}
+                                <span class="badge badge-warning">Passthrough</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ cert.created_at|date:"M d, Y H:i" }}</td>
+                            <td>{{ cert.not_after|date:"M d, Y H:i" }}</td>
+                            <td>
+                                {% if cert.is_expired %}
+                                <span class="badge badge-error">Expired</span>
+                                {% elif cert.is_near_expiry %}
+                                <span class="badge badge-warning">Expiring</span>
+                                {% else %}
+                                <span class="badge badge-success">Valid</span>
+                                {% endif %}
+                            </td>
+                            <td class="font-mono text-xs">{{ cert.serial }}</td>
+                            <td>
+                                {% if cert.source == 'acme' %}
+                                <span class="badge badge-info">ACME</span>
+                                {% else %}
+                                <span class="badge badge-primary">Manual</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'issuance:detail' cert.pk %}" class="btn btn-ghost btn-sm">View</a>
+                                <a href="{% url 'issuance:download' cert.pk %}" class="btn btn-ghost btn-sm">Download</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
+    {% else %}
+    <div class="alert alert-info">
+        <div>
+            <strong>No certificates issued yet.</strong>
+            <p class="text-sm mt-1">Certificates will appear here once they've been issued via ACME enrollment or manual CSR signing.</p>
+            <a href="{% url 'acme:index' %}" class="btn btn-primary mt-2">Configure ACME</a>
+            <a href="{% url 'issuance:sign' %}" class="btn btn-primary mt-2 ml-2">Sign CSR Manually</a>
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
