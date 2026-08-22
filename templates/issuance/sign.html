@@ -4,8 +4,8 @@
 {% block content %}
 <div class="space-y-6">
     <div>
-        <h1 class="text-2xl font-bold">{{ step_label }}</h1>
-        <p class="text-sm opacity-70 mt-1">
+        <h1 class="text-3xl font-semibold tracking-tight text-base-content">{{ step_label }}</h1>
+        <p class="mt-2 text-base text-base-content/70">
             {% if show_preview %}
             Review the certificate request and confirm signing
             {% else %}
@@ -15,33 +15,33 @@
     </div>
 
     {% if show_preview %}
-    <div class="card">
+    <div class="card bg-base-100 shadow-xl border-base-200/20">
         <div class="card-body">
-            <h2 class="card-title">Certificate Request Details</h2>
+            <h2 class="card-title text-lg text-base-content">Certificate Request Details</h2>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                <div class="alert alert-info">
+                <div class="alert alert-info bg-base-200/30 border-base-300/20">
                     <div>
-                        <strong>Common Name</strong>
-                        <div class="font-mono text-sm mt-1">{{ parsed_csr.common_name|default:"N/A" }}</div>
+                        <strong class="text-base-content">Common Name</strong>
+                        <div class="font-mono text-sm mt-1 text-base-content/90">{{ parsed_csr.common_name|default:"N/A" }}</div>
                     </div>
                 </div>
                 
-                <div class="alert alert-info">
+                <div class="alert alert-info bg-base-200/30 border-base-300/20">
                     <div>
-                        <strong>Key Type</strong>
-                        <div class="font-mono text-sm mt-1">{{ parsed_csr.key_type }}</div>
+                        <strong class="text-base-content">Key Type</strong>
+                        <div class="font-mono text-sm mt-1 text-base-content/90">{{ parsed_csr.key_type }}</div>
                         {% if parsed_csr.key_size %}
-                        <div class="font-mono text-sm">Key Size: {{ parsed_csr.key_size }} bits</div>
+                        <div class="font-mono text-sm text-base-content/80">Key Size: {{ parsed_csr.key_size }} bits</div>
                         {% endif %}
                     </div>
                 </div>
                 
                 {% if parsed_csr.sans %}
-                <div class="alert alert-info md:col-span-2">
+                <div class="alert alert-info md:col-span-2 bg-base-200/30 border-base-300/20">
                     <div>
-                        <strong>Subject Alternative Names</strong>
-                        <ul class="list-disc list-inside font-mono text-sm mt-1">
+                        <strong class="text-base-content">Subject Alternative Names</strong>
+                        <ul class="list-disc list-inside font-mono text-sm mt-1 text-base-content/90">
                             {% for san in parsed_csr.sans %}
                             <li>{{ san }}</li>
                             {% endfor %}
@@ -50,10 +50,10 @@
                 </div>
                 {% endif %}
                 
-                <div class="alert alert-info">
+                <div class="alert alert-info bg-base-200/30 border-base-300/20">
                     <div>
-                        <strong>Requested EKUs</strong>
-                        <div class="font-mono text-sm mt-1">
+                        <strong class="text-base-content">Requested EKUs</strong>
+                        <div class="font-mono text-sm mt-1 text-base-content/90">
                             {% if parsed_csr.requested_ekus %}
                             {{ parsed_csr.requested_ekus|join:", " }}
                             {% else %}
@@ -63,10 +63,10 @@
                     </div>
                 </div>
                 
-                <div class="alert alert-info">
+                <div class="alert alert-info bg-base-200/30 border-base-300/20">
                     <div>
-                        <strong>Requested KUs</strong>
-                        <div class="font-mono text-sm mt-1">
+                        <strong class="text-base-content">Requested KUs</strong>
+                        <div class="font-mono text-sm mt-1 text-base-content/90">
                             {% if parsed_csr.requested_kus %}
                             {{ parsed_csr.requested_kus|join:", " }}
                             {% else %}
@@ -80,9 +80,9 @@
     </div>
     {% endif %}
 
-    <div class="card">
+    <div class="card bg-base-100 shadow-xl border-base-200/20">
         <div class="card-body">
-            <h2 class="card-title">
+            <h2 class="card-title text-lg text-base-content">
                 {% if show_preview %}Confirm Certificate Issuance{% else %}Submit Certificate Request{% endif %}
             </h2>
             
@@ -93,66 +93,71 @@
                 <!-- CSR Input Section -->
                 <div class="space-y-4">
                     <div class="form-control">
-                        <label class="label cursor-pointer">
-                            <span class="label-text mr-4">Input Method</span>
-                            <div class="join">
-                                <input type="radio" name="csr_source" value="paste" checked="checked" class="radio radio-primary" />
-                                <span class="btn btn-sm join-item {% if form.csr_source.value == 'paste' %}btn-active{% endif %}">Paste CSR</span>
-                                <input type="radio" name="csr_source" value="upload" class="radio radio-primary" />
-                                <span class="btn btn-sm join-item {% if form.csr_source.value == 'upload' %}btn-active{% endif %}">Upload File</span>
-                            </div>
+                        <label class="label">
+                            <span class="label-text font-semibold text-base-content">Input Method</span>
                         </label>
+                        <div class="join w-full max-w-md">
+                            <input type="radio" name="csr_source" value="paste" checked="checked" id="toggle-paste" class="hidden" />
+                            <label for="toggle-paste" class="join-item btn btn-sm flex-1 cursor-pointer border border-base-200 hover:border-primary transition-colors bg-base-100 text-base-content">
+                                Paste CSR
+                            </label>
+                            <input type="radio" name="csr_source" value="upload" id="toggle-upload" class="hidden" />
+                            <label for="toggle-upload" class="join-item btn btn-sm flex-1 cursor-pointer border border-base-200 hover:border-primary transition-colors bg-base-100 text-base-content">
+                                Upload File
+                            </label>
+                        </div>
                     </div>
                     
-                    {% if form.csr_source.value == 'paste' %}
-                    <div class="form-control">
+                    <div class="form-control" id="paste-section">
                         <label class="label" for="{{ form.csr_paste.id_for_label }}">
-                            <span class="label-text">{{ form.csr_paste.label }}</span>
+                            <span class="label-text font-medium text-base-content">{{ form.csr_paste.label }}</span>
                         </label>
-                        {{ form.csr_paste }}
+                        <textarea id="{{ form.csr_paste.id_for_label }}" name="{{ form.csr_paste.html_name }}" 
+                                  class="textarea textarea-bordered w-full max-w-lg bg-base-200 text-base-content border-base-300/30"
+                                  rows="8">{{ form.csr_paste.value|default:"" }}</textarea>
                         {% if form.csr_paste.errors %}
-                        <div class="alert alert-error mt-2">
+                        <div class="alert alert-error mt-2 bg-error/10 border-error/20">
                             <div>
                                 {% for error in form.csr_paste.errors %}
-                                <span>{{ error }}</span>
+                                <span class="text-sm">{{ error }}</span>
                                 {% endfor %}
                             </div>
                         </div>
                         {% endif %}
                     </div>
-                    {% else %}
-                    <div class="form-control">
+                    
+                    <div class="form-control hidden" id="upload-section">
                         <label class="label" for="{{ form.csr_file.id_for_label }}">
-                            <span class="label-text">{{ form.csr_file.label }}</span>
+                            <span class="label-text font-medium text-base-content">{{ form.csr_file.label }}</span>
                         </label>
-                        {{ form.csr_file }}
-                        <p class="label-text-alt mt-1">Accepts .csr or .pem files</p>
+                        <input type="file" id="{{ form.csr_file.id_for_label }}" name="{{ form.csr_file.html_name }}" 
+                               accept=".csr,.pem" class="file-input file-input-bordered file-input-sm w-full max-w-lg bg-base-200 text-base-content border-base-300/30" />
+                        <p class="label-text-alt mt-1 text-base-content/60">Accepts .csr or .pem files</p>
                         {% if form.csr_file.errors %}
-                        <div class="alert alert-error mt-2">
+                        <div class="alert alert-error mt-2 bg-error/10 border-error/20">
                             <div>
                                 {% for error in form.csr_file.errors %}
-                                <span>{{ error }}</span>
+                                <span class="text-sm">{{ error }}</span>
                                 {% endfor %}
                             </div>
                         </div>
                         {% endif %}
                     </div>
-                    {% endif %}
                 </div>
                 {% endif %}
                 
                 <!-- Template Selection -->
                 <div class="form-control">
                     <label class="label" for="{{ form.template.id_for_label }}">
-                        <span class="label-text">{{ form.template.label }}</span>
+                        <span class="label-text font-medium text-base-content">{{ form.template.label }}</span>
                     </label>
                     {{ form.template }}
-                    <p class="label-text-alt mt-1">{{ form.template.help_text }}</p>
+                    <p class="label-text-alt mt-1 text-base-content/60">{{ form.template.help_text }}</p>
                     {% if form.template.errors %}
-                    <div class="alert alert-error mt-2">
+                    <div class="alert alert-error mt-2 bg-error/10 border-error/20">
                         <div>
                             {% for error in form.template.errors %}
-                            <span>{{ error }}</span>
+                            <span class="text-sm">{{ error }}</span>
                             {% endfor %}
                         </div>
                     </div>
@@ -161,38 +166,38 @@
                 
                 <!-- Passthrough Option -->
                 {% if show_preview %}
-                <div class="alert alert-warning">
+                <div class="alert alert-warning bg-warning/10 border-warning/20">
                     <div>
-                        <strong>Warning: Passthrough Mode</strong>
-                        <p class="text-sm mt-1">
-                            When enabled, this certificate will be signed with the <strong>exact</strong> extensions requested in the CSR,
+                        <strong class="text-base-content">Warning: Passthrough Mode</strong>
+                        <p class="text-sm mt-1 text-base-content/80">
+                            When enabled, this certificate will be signed with the <strong class="text-base-content">exact</strong> extensions requested in the CSR,
                             bypassing template policy (except CA bits are always rejected for safety).
                         </p>
                     </div>
                 </div>
                 {% if is_passthrough %}
-                <div class="alert alert-info">
-                    <div>Passthrough mode is <strong>enabled</strong> - certificate will be signed with requested extensions.</div>
+                <div class="alert alert-info bg-info/10 border-info/20">
+                    <div class="text-base-content">Passthrough mode is <strong class="text-base-content">enabled</strong> - certificate will be signed with requested extensions.</div>
                 </div>
                 {% else %}
-                <div class="alert alert-info">
-                    <div>Standard template policy will be applied.</div>
+                <div class="alert alert-info bg-info/10 border-info/20">
+                    <div class="text-base-content">Standard template policy will be applied.</div>
                 </div>
                 {% endif %}
                 {% else %}
                 {{ form.passthrough }}
                 <label class="label cursor-pointer" for="{{ form.passthrough.id_for_label }}">
-                    <span class="label-text ml-2">{{ form.passthrough.label }}</span>
+                    <span class="label-text ml-2 text-base-content">{{ form.passthrough.label }}</span>
                 </label>
-                <p class="label-text-alt ml-8">{{ form.passthrough.help_text }}</p>
+                <p class="label-text-alt ml-8 text-base-content/60">{{ form.passthrough.help_text }}</p>
                 {% endif %}
                 
                 <!-- Validation Errors -->
                 {% if validation_errors %}
-                <div class="alert alert-error">
+                <div class="alert alert-error bg-error/10 border-error/20">
                     <div>
-                        <strong>Certificate Request Cannot Be Signed</strong>
-                        <div class="text-sm mt-2 whitespace-pre-line">
+                        <strong class="text-base-content">Certificate Request Cannot Be Signed</strong>
+                        <div class="text-sm mt-2 whitespace-pre-line text-base-content/90">
                             {{ validation_errors }}
                         </div>
                     </div>
@@ -211,14 +216,14 @@
                 <!-- Action Buttons -->
                 <div class="card-actions mt-6">
                     {% if show_preview %}
-                    <button type="submit" name="action" value="confirm" class="btn btn-primary">
+                    <button type="submit" name="action" value="confirm" class="btn btn-primary btn-lg">
                         Sign Certificate
                     </button>
-                    <a href="{% url 'issuance:sign' %}" class="btn btn-ghost">
+                    <a href="{% url 'issuance:sign' %}" class="btn btn-ghost btn-lg">
                         Cancel
                     </a>
                     {% else %}
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" name="action" value="preview" class="btn btn-primary btn-lg">
                         Preview Request
                     </button>
                     {% endif %}
@@ -227,4 +232,45 @@
         </div>
     </div>
 </div>
+
+<script>
+// Toggle between paste and upload CSR sections using hidden radio buttons
+document.addEventListener('DOMContentLoaded', function() {
+    const pasteRadio = document.getElementById('toggle-paste');
+    const uploadRadio = document.getElementById('toggle-upload');
+    const pasteSection = document.getElementById('paste-section');
+    const uploadSection = document.getElementById('upload-section');
+    const pasteLabel = document.querySelector('label[for="toggle-paste"]');
+    const uploadLabel = document.querySelector('label[for="toggle-upload"]');
+    
+    function updateSection() {
+        if (pasteSection && uploadSection) {
+            if (pasteRadio && pasteRadio.checked) {
+                pasteSection.classList.remove('hidden');
+                uploadSection.classList.add('hidden');
+                if (pasteLabel) pasteLabel.classList.add('active-state');
+                if (uploadLabel) uploadLabel.classList.remove('active-state');
+            } else if (uploadRadio && uploadRadio.checked) {
+                pasteSection.classList.add('hidden');
+                uploadSection.classList.remove('hidden');
+                if (pasteLabel) pasteLabel.classList.remove('active-state');
+                if (uploadLabel) uploadLabel.classList.add('active-state');
+            }
+        }
+    }
+    
+    // Set up click handlers for the labels (which trigger the hidden radios)
+    const labels = document.querySelectorAll('.join label');
+    labels.forEach(label => {
+        label.addEventListener('click', updateSection);
+    });
+    
+    // Also listen for radio change events directly
+    if (pasteRadio) pasteRadio.addEventListener('change', updateSection);
+    if (uploadRadio) uploadRadio.addEventListener('change', updateSection);
+    
+    // Initialize visibility on page load
+    updateSection();
+});
+</script>
 {% endblock %}

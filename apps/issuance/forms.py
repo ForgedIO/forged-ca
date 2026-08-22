@@ -69,6 +69,7 @@ class CsrSignForm(forms.Form):
             return self.cleaned_data["csr_paste"]
         else:
             uploaded_file = self.cleaned_data["csr_file"]
+            uploaded_file.seek(0)  # Reset file pointer before reading
             return uploaded_file.read().decode("utf-8")
 
 class CsrSignConfirmForm(forms.Form):

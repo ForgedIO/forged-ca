@@ -32,6 +32,12 @@ def sign_csr(csr_pem: str, template, is_passthrough: bool = False,
     Raises:
         SignerError: If signing fails or node is not configured properly
     """
+    if not csr_pem or not csr_pem.strip():
+        raise SignerError("Empty CSR provided. Please paste or upload a valid CSR.")
+    
+    if not template:
+        raise SignerError("No template specified. Please select a certificate template.")
+    
     # Get CA configuration
     ca_cert_path, ca_key_path, signer_tier = get_ca_paths()
     

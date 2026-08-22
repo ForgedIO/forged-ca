@@ -276,3 +276,10 @@
         display: none !important;
     }
 }
+
+/* ---------------------------------------------------------------------------\n * Active state for toggle buttons (radio-based)\n * ------------------------------------------------------------------------- */
+.active-state {
+    background-color: hsl(var(--p));
+    color: hsl(var(--pc));
+    border-color: hsl(var(--p));
+}
