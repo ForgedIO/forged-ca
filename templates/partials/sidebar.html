@@ -1,5 +1,4 @@
 {% load static %}
-
 {% with ns=request.resolver_match.namespace un=request.resolver_match.url_name %}
 <aside class="sidebar-surface w-64 min-h-full flex flex-col">
 
@@ -75,12 +74,73 @@
                 </a>
             </li>
 
-            <li>
-                <a href="{% url 'core:settings' %}"
-                   class="{% if ns == 'core' and un == 'settings' %}menu-active{% endif %}">
-                    <svg class="icon-sm" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                    Settings
-                </a>
+            {# ── Settings dropdown ───────────────────────────────────── #}
+            <li class="settings-dropdown">
+                <details{% if "/settings/" in request.path %} open{% endif %}>
+                    <summary>
+                        <span class="flex items-center gap-2 flex-1 min-w-0">
+                            <svg class="icon-sm shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 001.065-2.572c1.756-.426 1.756-2.924 0-3.35a1.724 1.724 0 00-1.066-2.573c-.94-1.543.826-3.31 2.37-2.37a1.724 1.724 0 002.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            <span class="truncate">Settings</span>
+                        </span>
+                        <svg class="settings-chevron icon-sm shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    </summary>
+                    <ul class="menu menu-md w-full p-2 space-y-0.5">
+                        <li>
+                            <a href="{% url 'core:settings' %}"
+                               class="{% if ns == 'core' and un == 'settings' %}menu-active{% endif %}">
+                                Overview
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'core:settings_daemon' %}"
+                               class="{% if ns == 'core' and un == 'settings_daemon' %}menu-active{% endif %}">
+                                step-ca daemon
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'core:settings_webui_cert' %}"
+                               class="{% if ns == 'core' and un == 'settings_webui_cert' %}menu-active{% endif %}">
+                                Web UI cert
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'core:settings_https_port' %}"
+                               class="{% if ns == 'core' and un == 'settings_https_port' %}menu-active{% endif %}">
+                                HTTPS port
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'core:settings_trust_download' %}"
+                               class="{% if ns == 'core' and un == 'settings_trust_download' %}menu-active{% endif %}">
+                                Trust downloads
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'core:settings_auth' %}"
+                               class="{% if ns == 'core' and un == 'settings_auth' %}menu-active{% endif %}">
+                                Authentication
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'core:settings_users' %}"
+                               class="{% if ns == 'core' and un == 'settings_users' %}menu-active{% endif %}">
+                                Admin users
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'core:settings_email' %}"
+                               class="{% if ns == 'core' and un == 'settings_email' %}menu-active{% endif %}">
+                                Email
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'core:settings_syslog' %}"
+                               class="{% if ns == 'core' and un == 'settings_syslog' %}menu-active{% endif %}">
+                                Syslog
+                            </a>
+                        </li>
+                    </ul>
+                </details>
             </li>
         </ul>
     </nav>

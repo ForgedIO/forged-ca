@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Settings · step-ca daemon · ForgedCA{% endblock %}
+
+{% block content %}
+<div class="page-header mb-6">
+    <div class="flex items-center gap-3">
+        <a href="{% url 'core:settings' %}" class="btn btn-ghost btn-sm" title="Back to settings" aria-label="Back to settings">
+            <svg class="icon-sm" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+        </a>
+        <div>
+            <h1 class="text-2xl font-bold">step-ca daemon</h1>
+            <p class="text-base-content/60 text-sm mt-1">Control and monitor the issuing daemon on this node.</p>
+        </div>
+    </div>
+</div>
+
+{% if config.is_issuing %}
+    {% if step_ca and not step_ca.installed %}
+        <div class="alert alert-warning mb-4"><span>step-ca is not installed on this node. Run the installer from the wizard to continue.</span></div>
+    {% else %}
+        <div id="step-ca-card" class="card bg-base-100 border border-base-300 mb-6">
+            <div class="card-body p-6">
+
+                <div class="flex items-center justify-between flex-wrap gap-4">
+                    <div>
+                        <h2 class="card-title">Issuing daemon</h2>
+                        <div class="flex items-center gap-2 mt-2">
+                            <span id="step-ca-state"
+                                  class="badge {% if step_ca and step_ca.active %}badge-success{% else %}badge-ghost{% endif %}">
+                                {% if step_ca and step_ca.active %}Active{% else %}Stopped{% endif %}
+                            </span>
+                            {% if step_ca and step_ca.enabled %}<span class="badge badge-ghost">starts on boot</span>{% endif %}
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2">
+                        <form method="post" action="{% url 'ca:daemon_action' 'start' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{% url 'core:settings_daemon' %}">
+                            <button type="submit" class="btn btn-sm">Start</button>
+                        </form>
+                        <form method="post" action="{% url 'ca:daemon_action' 'stop' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{% url 'core:settings_daemon' %}">
+                            <button type="submit" class="btn btn-sm">Stop</button>
+                        </form>
+                        <form method="post" action="{% url 'ca:daemon_action' 'restart' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{% url 'core:settings_daemon' %}">
+                            <button type="submit" class="btn btn-sm">Restart</button>
+                        </form>
+                        <form method="post" action="{% url 'ca:daemon_action' 'reload' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{% url 'core:settings_daemon' %}">
+                            <button type="submit" class="btn btn-sm">Reload</button>
+                        </form>
+                        <form method="post" action="{% url 'ca:daemon_action' 'enable' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{% url 'core:settings_daemon' %}">
+                            <button type="submit" class="btn btn-sm">Enable on boot</button>
+                        </form>
+                    </div>
+                </div>
+
+                <p class="text-xs text-base-content/50 mt-4">
+                    Status refreshes every 3 seconds. The daemon reports its
+                    step-ca state over its own status endpoint.
+                </p>
+            </div>
+        </div>
+
+        {% if step_ca_log %}
+            <div class="card bg-base-100 border border-base-300">
+                <div class="card-body p-6">
+                    <h2 class="card-title text-base mb-2">Recent journal</h2>
+                    <p class="text-xs text-base-content/50 mb-2">
+                        Last {{ step_ca_log.lines|length }} lines from
+                        <code>journalctl -u step-ca</code>.
+                    </p>
+                    <pre class="pem-viewer overflow-auto max-h-80 text-xs">{{ step_ca_log.text }}</pre>
+                </div>
+            </div>
+        {% endif %}
+    {% endif %}
+{% else %}
+    <div class="alert alert-info mb-4">
+        <span>This node is not running an Issuing CA, so there is no
+        step-ca daemon to manage here. The step-ca daemon only exists on
+        nodes with the <strong>Issuing CA</strong> role.</span>
+    </div>
+{% endif %}
+
+{% if config.is_issuing and step_ca and step_ca.installed %}
+<script>
+  // Poll the daemon's own status endpoint for a live readout. The page
+  // renders the initial state server-side; this only updates the badge
+  // when the daemon changes state out from under us.
+  (function () {
+    var el = document.getElementById('step-ca-state');
+    if (!el) return;
+    function tick() {
+      fetch('{% url "ca:daemon_status" %}', {credentials: 'same-origin'})
+        .then(function (r) { return r.json(); })
+        .then(function (s) {
+          var active = !!(s && s.active);
+          el.textContent = active ? 'Active' : 'Stopped';
+          el.classList.toggle('badge-success', active);
+          el.classList.toggle('badge-ghost', !active);
+        })
+        .catch(function () { /* keep the last known state */ });
+    }
+    setInterval(tick, 3000);
+  })();
+</script>
+{% endif %}
+{% endblock %}

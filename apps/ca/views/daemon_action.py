@@ -31,7 +31,7 @@ class DaemonActionView(LoginRequiredMixin, View):
                 request,
                 "step-ca only runs on nodes with an Issuing CA role.",
             )
-            return redirect("core:settings")
+            return redirect("core:settings_daemon")
 
         func, success_msg = ACTIONS[action]
         ok, stderr = func()
@@ -56,4 +56,4 @@ class DaemonActionView(LoginRequiredMixin, View):
         next_url = request.POST.get("next") or ""
         if next_url and url_has_allowed_host_and_scheme(next_url, {request.get_host()}):
             return redirect(next_url)
-        return redirect("core:settings")
+        return redirect("core:settings_daemon")

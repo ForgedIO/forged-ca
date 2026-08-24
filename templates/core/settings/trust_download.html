@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Settings · Trust downloads · ForgedCA{% endblock %}
+
+{% block content %}
+<div class="page-header mb-6">
+    <div class="flex items-center gap-3">
+        <a href="{% url 'core:settings' %}" class="btn btn-ghost btn-sm" title="Back to settings" aria-label="Back to settings">
+            <svg class="icon-sm" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+        </a>
+        <div>
+            <h1 class="text-2xl font-bold">Trust downloads</h1>
+            <p class="text-base-content/60 text-sm mt-1">Control who can pull the trust bundle.</p>
+        </div>
+    </div>
+</div>
+
+<div class="card bg-base-100 border border-base-300">
+    <div class="card-body">
+        <h2 class="card-title text-base">Trust-download auth <span class="badge">Coming soon</span></h2>
+        <p class="text-sm text-base-content/70 mt-0">Currently <strong>{% if config.trust_download_requires_auth %}Require admin login{% else %}Public (unauthenticated) — OK for GPO / Intune / Ansible unattended pulls{% endif %}</strong>. A toggle for this is on the roadmap.</p>
+    </div>
+</div>
+{% endblock %}

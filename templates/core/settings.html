@@ -1,262 +1,170 @@
 {% extends "base.html" %}
-{% load static %}
-{% block title %}Settings &mdash; ForgedCA{% endblock %}
+
+{% block title %}Settings · ForgedCA{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
-    <div>
-        <h1 class="text-2xl font-bold">Settings</h1>
-        <p class="text-sm opacity-70 mt-1">Node-level configuration. Future slices will populate each stubbed section.</p>
-    </div>
+<div class="page-header mb-6">
+    <h1 class="text-2xl font-bold">Settings</h1>
+    <p class="text-base-content/60 text-sm mt-1">Node-level configuration. Each section is its own page — pick one below.</p>
+</div>
 
-    {% if step_ca %}
-    <div id="step-ca-card" class="card bg-base-100 shadow {% if step_ca.active %}border-l-4 border-success{% elif step_ca.substate == 'failed' %}border-l-4 border-error{% else %}border-l-4 border-warning{% endif %}">
-        <div class="card-body">
-            <h2 class="card-title">step-ca daemon</h2>
-            {% if not step_ca.installed %}
-                <div class="alert alert-error mt-2 text-sm"><span>{{ step_ca.message }}</span></div>
-            {% else %}
-                <div class="stats stats-vertical sm:stats-horizontal shadow-sm mt-2">
-                    <div class="stat">
-                        <div class="stat-title">Status</div>
-                        <div id="step-ca-status" class="stat-value text-base {% if step_ca.active %}text-success{% elif step_ca.substate == 'failed' %}text-error{% endif %}">{{ step_ca.substate|title }}</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-title">Start on boot</div>
-                        <div id="step-ca-enabled" class="stat-value text-base">{% if step_ca.enabled %}Enabled{% else %}Disabled{% endif %}</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-title">Listen</div>
-                        <div class="stat-value text-base font-mono">{{ config.hostname|default:"localhost" }}:9000</div>
-                    </div>
-                </div>
-                <p class="text-sm opacity-70 mt-3">
-                    The ACME API and <code class="font-mono">/roots</code> / <code class="font-mono">/federation</code> endpoints step-ca exposes come from this daemon. If it's stopped, ACME enrolment stops; the admin UI and trust downloads keep working because they're served by nginx + Django.
-                </p>
-                <div class="mt-3 flex flex-wrap gap-2">
-                    {% if step_ca.active %}
-                        <form method="post" action="{% url 'ca:daemon_action' 'reload' %}" class="inline">
-                            {% csrf_token %}<button type="submit" class="btn btn-sm btn-primary">Reload config</button>
-                        </form>
-                        <form method="post" action="{% url 'ca:daemon_action' 'restart' %}" class="inline">
-                            {% csrf_token %}<button type="submit" class="btn btn-sm btn-primary">Restart</button>
-                        </form>
-                        <form method="post" action="{% url 'ca:daemon_action' 'stop' %}" class="inline">
-                            {% csrf_token %}<button type="submit" class="btn btn-sm btn-error">Stop</button>
-                        </form>
-                    {% elif step_ca.substate == 'inactive' or step_ca.substate == 'dead' %}
-                        <form method="post" action="{% url 'ca:daemon_action' 'start' %}" class="inline">
-                            {% csrf_token %}<button type="submit" class="btn btn-sm btn-primary">Start</button>
-                        </form>
-                    {% else %}
-                        {# Anything else (activating / auto-restart / failed) — the admin
-                           needs to break a crash loop first, then investigate the log. #}
-                        <form method="post" action="{% url 'ca:daemon_action' 'stop' %}" class="inline">
-                            {% csrf_token %}<button type="submit" class="btn btn-sm btn-error">Stop (break crash loop)</button>
-                        </form>
-                        <form method="post" action="{% url 'ca:daemon_action' 'restart' %}" class="inline">
-                            {% csrf_token %}<button type="submit" class="btn btn-sm btn-primary">Retry start</button>
-                        </form>
-                    {% endif %}
-                    {% if not step_ca.enabled %}
-                        <form method="post" action="{% url 'ca:daemon_action' 'enable' %}" class="inline">
-                            {% csrf_token %}<button type="submit" class="btn btn-sm btn-primary">Enable on boot</button>
-                        </form>
-                    {% endif %}
-                </div>
-                {% if step_ca.substate == 'activating' %}
-                    <div class="alert alert-error mt-3 text-sm">
-                        <span><strong>Crash loop.</strong> step-ca exits on start-up and systemd respawns it every 5 seconds. Click <strong>Stop (break crash loop)</strong>, then read the log below for the error.</span>
-                    </div>
-                {% elif not step_ca.active %}
-                    <div class="alert alert-warning mt-3 text-sm">
-                        <span>Daemon isn't running. ACME enrolment is paused until you start it.</span>
-                    </div>
+<div class="grid gap-4 md:grid-cols-2">
+
+    <a href="{% url 'core:settings_daemon' %}"
+       class="card bg-base-100 border border-base-300 hover:border-base-content/40 transition-colors">
+        <div class="card-body p-5">
+            <div class="flex items-center gap-2">
+                <span class="text-base-content/70">
+                    <svg class="icon-md" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M5 12a2 2 0 1 1 4 0m-4 0a2 2 0 1 0 4 0m10 0a2 2 0 1 1-4 0m4 0a2 2 0 1 0-4 0"/>
+                    </svg>
+                </span>
+                <h2 class="card-title text-base">step-ca daemon</h2>
+            </div>
+            <p class="text-sm text-base-content/60">
+                {% if config.is_issuing %}
+                Start, stop, restart and monitor the issuing daemon on this node.
+                {% else %}
+                Available on nodes that run an Issuing CA.
                 {% endif %}
+            </p>
+            <div class="flex justify-end mt-2 text-base-content/40">
+                <svg class="icon-sm" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </div>
+        </div>
+    </a>
 
-                {% if step_ca_log %}
-                    <details class="mt-3" {% if step_ca.substate == 'activating' or step_ca.substate == 'failed' %}open{% endif %}>
-                        <summary class="cursor-pointer text-sm font-medium opacity-80">Recent step-ca log <span class="opacity-60">(last 30 lines)</span></summary>
-                        <pre class="mt-2 bg-neutral text-neutral-content p-3 rounded text-xs overflow-auto font-mono max-h-72 whitespace-pre">{{ step_ca_log }}</pre>
-                    </details>
+    <a href="{% url 'core:settings_webui_cert' %}"
+       class="card bg-base-100 border border-base-300 hover:border-base-content/40 transition-colors">
+        <div class="card-body p-5">
+            <div class="flex items-center gap-2">
+                <span class="text-base-content/70">
+                    <svg class="icon-md" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 4v5c0 4.5-3 8-7 9-4-1-7-4.5-7-9V7l7-4z"/>
+                    </svg>
+                </span>
+                <h2 class="card-title text-base">Web UI certificate</h2>
+            </div>
+            <p class="text-sm text-base-content/60">
+                {% if config.is_issuing %}
+                Re-issue the admin UI's own certificate, signed by this node's Issuing CA.
+                {% else %}
+                Signing is available on nodes that run an Issuing CA.
                 {% endif %}
-            {% endif %}
+            </p>
+            <div class="flex justify-end mt-2 text-base-content/40">
+                <svg class="icon-sm" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </div>
         </div>
-    </div>
-    <script>
-      (function () {
-        var card = document.getElementById('step-ca-card');
-        if (!card) return;
-        var statusEl  = document.getElementById('step-ca-status');
-        var enabledEl = document.getElementById('step-ca-enabled');
-        var url = "{% url 'ca:daemon_status' %}";
+    </a>
 
-        function applyState(data) {
-          if (!data || !data.installed) return;
-          if (statusEl) {
-            statusEl.textContent = (data.substate || 'unknown')
-              .replace(/(^|\s)\w/g, function (c) { return c.toUpperCase(); });
-            statusEl.classList.toggle('text-success', !!data.active);
-            statusEl.classList.toggle('text-error',   data.substate === 'failed');
-          }
-          if (enabledEl) enabledEl.textContent = data.enabled ? 'Enabled' : 'Disabled';
-          card.classList.remove('border-success', 'border-warning', 'border-error');
-          if (data.active)                    card.classList.add('border-success');
-          else if (data.substate === 'failed') card.classList.add('border-error');
-          else                                 card.classList.add('border-warning');
-        }
-
-        function poll() {
-          fetch(url, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
-            .then(function (r) { return r.ok ? r.json() : null; })
-            .then(applyState)
-            .catch(function () {});
-        }
-        setInterval(poll, 3000);
-      })();
-    </script>
-    {% endif %}
-
-    {# ── Web UI certificate ─────────────────────────────────────────── #}
-    <div class="card bg-base-100 shadow {% if not config.webui_cert_path %}border-l-4 border-warning{% else %}border-l-4 border-success{% endif %}">
-        <div class="card-body">
-            <h2 class="card-title">Web UI certificate</h2>
-
-            {% if config.webui_cert_path %}
-                <p class="text-sm opacity-70 mt-0">This admin UI is served with a certificate issued by your
-                    {% if config.is_issuing %}<strong>Issuing CA</strong>{% elif config.is_intermediate %}<strong>Intermediate CA</strong>{% else %}<strong>Root CA</strong>{% endif %}.
-                    Devices that trust the Root see a valid lock on this page.
-                </p>
-                <div class="stats stats-vertical sm:stats-horizontal shadow-sm mt-2">
-                    <div class="stat">
-                        <div class="stat-title">Status</div>
-                        <div class="stat-value text-base text-success">Signed by ForgedCA</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-title">Lifetime</div>
-                        <div class="stat-value text-base">{{ config.webui_lifetime_days }} days</div>
-                    </div>
-                </div>
-                <form method="post" action="{% url 'ca:sign_webui' %}" class="mt-4 space-y-3">
-                    {% csrf_token %}
-                    <div class="form-control">
-                        <label for="webui_sans" class="label pb-1">
-                            <span class="label-text font-medium">Subject Alternative Names</span>
-                        </label>
-                        <textarea id="webui_sans" name="webui_sans" rows="5" required
-                                  class="textarea textarea-bordered font-mono text-sm w-full">{{ config.webui_sans }}</textarea>
-                        <div class="label pt-1">
-                            <span class="label-text-alt opacity-70">One DNS name or IP per line. Add every name you reach this admin UI on — including the FQDN in your browser's address bar. A missing name is what triggers Chrome's "unusual and incorrect credentials" / Firefox's "SSL_ERROR_BAD_CERT_DOMAIN".</span>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-sm btn-primary">Save &amp; re-issue</button>
-                </form>
-            {% elif config.is_issuing %}
-                <p class="text-sm opacity-80 mt-0">
-                    nginx is currently serving the install-time self-signed certificate. Replace it with a cert issued by your own CA in two steps. <strong>Do step 1 first</strong> &mdash; swapping the cert before your device trusts the new Root will lock your browser out of this page.
-                </p>
-
-                <div class="mt-4">
-                    <h3 class="font-semibold">Step 1. Install the trust bundle on this device</h3>
-                    <p class="text-sm opacity-70 mt-1">Grab <code class="font-mono">bundle.crt</code> (Root + Intermediate + Issuing) from the <a href="{% url 'trust:index' %}" class="link">Trust</a> page, then follow the instructions for your OS / browser:</p>
-                    <div class="mt-3">
-                        {% include "partials/trust_install_instructions.html" %}
-                    </div>
-                </div>
-
-                <div class="mt-5">
-                    <h3 class="font-semibold">Step 2. Sign this Web UI</h3>
-                    <p class="text-sm opacity-70 mt-1">Once step 1 is done <strong>on this device</strong>, review the SAN list below and click the button. nginx reloads with the freshly-issued cert.</p>
-                    <div class="alert alert-warning mt-2 text-sm">
-                        <span>If you click before installing the trust bundle, the browser will block this page as signed by an unknown CA and you'll lose access except from another device (or by restoring <code class="font-mono">/opt/forgedca/certs/forgedca.crt</code> from SSH).</span>
-                    </div>
-                    <form method="post" action="{% url 'ca:sign_webui' %}" class="mt-3 space-y-3">
-                        {% csrf_token %}
-                        <div class="form-control">
-                            <label for="webui_sans_initial" class="label pb-1">
-                                <span class="label-text font-medium">Subject Alternative Names</span>
-                            </label>
-                            <textarea id="webui_sans_initial" name="webui_sans" rows="5" required
-                                      class="textarea textarea-bordered font-mono text-sm w-full">{{ config.webui_sans }}</textarea>
-                            <div class="label pt-1">
-                                <span class="label-text-alt opacity-70">One per line. Pre-filled from the wizard — add anything missing (e.g. the FQDN in your browser's address bar) before signing.</span>
-                            </div>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Sign Web UI with ForgedCA</button>
-                    </form>
-                </div>
-            {% else %}
-                <p class="text-sm opacity-80 mt-0">
-                    nginx is currently serving the install-time self-signed certificate. This node runs
-                    {% if config.is_root and config.is_intermediate %}<strong>Root &amp; Intermediate</strong>{% elif config.is_root %}<strong>Root only</strong>{% elif config.is_intermediate %}<strong>Intermediate only</strong>{% endif %} &mdash;
-                    neither tier should be signing leaf certificates directly. Keep the self-signed cert until you deploy an Issuing CA.
-                </p>
-                <div class="alert alert-info mt-3 text-sm">
-                    <div>
-                        <strong>Why we're holding off.</strong>
-                        <div class="mt-1 opacity-90">
-                            Standard PKI practice keeps Root and Intermediate keys off the leaf-signing path &mdash; their job is to sign <em>other CAs</em>, not web-server certs. Signing this admin UI directly off a Root or Intermediate would use those keys online in a way that defeats the reason you have tiers in the first place.
-                        </div>
-                    </div>
-                </div>
-                <div class="mt-4">
-                    <h3 class="font-semibold">What to do next</h3>
-                    <ol class="list-decimal pl-5 mt-1 space-y-1 text-sm opacity-80">
-                        <li>Deploy a second node with the <strong>Issuing CA</strong> role (next slice wires up federation for this).</li>
-                        <li>Federate it to this node so it gets its Issuing cert signed by your chain.</li>
-                        <li>Come back here and sign the Web UI off the Issuing CA.</li>
-                    </ol>
-                </div>
-            {% endif %}
+    <a href="{% url 'core:settings_https_port' %}"
+       class="card bg-base-100 border border-base-300 hover:border-base-content/40 transition-colors">
+        <div class="card-body p-5">
+            <div class="flex items-center gap-2">
+                <span class="text-base-content/70">
+                    <svg class="icon-md" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 10h16M4 14h16M9 4v16M15 4v16"/>
+                    </svg>
+                </span>
+                <h2 class="card-title text-base">HTTPS port</h2>
+            </div>
+            <p class="text-sm text-base-content/60">Move the admin UI off 8443 to 443 (live reconfig).</p>
+            <div class="flex justify-end mt-2 text-base-content/40">
+                <svg class="icon-sm" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </div>
         </div>
-    </div>
+    </a>
 
-    {# ── Stub: HTTPS port ─────────────────────────────────────────── #}
-    <div class="card bg-base-100 shadow">
-        <div class="card-body">
-            <h2 class="card-title text-base">HTTPS port <span class="badge">Coming soon</span></h2>
-            <p class="text-sm opacity-70 mt-0">Currently <code class="font-mono">{{ config.hostname|default:"this node" }}:8443</code>. Changing the port here &mdash; 8443 &rarr; 443 or any other &mdash; with a graceful nginx reconfig is on the roadmap.</p>
+    <a href="{% url 'core:settings_trust_download' %}"
+       class="card bg-base-100 border border-base-300 hover:border-base-content/40 transition-colors">
+        <div class="card-body p-5">
+            <div class="flex items-center gap-2">
+                <span class="text-base-content/70">
+                    <svg class="icon-md" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 12h4l3 8 4-16 3 8h4"/>
+                    </svg>
+                </span>
+                <h2 class="card-title text-base">Trust downloads</h2>
+            </div>
+            <p class="text-sm text-base-content/60">Require login before trust bundles can be downloaded.</p>
+            <div class="flex justify-end mt-2 text-base-content/40">
+                <svg class="icon-sm" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </div>
         </div>
-    </div>
+    </a>
 
-    {# ── Stub: Trust-download auth ────────────────────────────────── #}
-    <div class="card bg-base-100 shadow">
-        <div class="card-body">
-            <h2 class="card-title text-base">Trust-download auth <span class="badge">Coming soon</span></h2>
-            <p class="text-sm opacity-70 mt-0">Currently <strong>{% if config.trust_download_requires_auth %}Require admin login{% else %}Public (unauthenticated)<!-- default --> — OK for GPO / Intune / Ansible unattended pulls{% endif %}</strong>. A toggle for this is on the roadmap.</p>
+    <a href="{% url 'core:settings_auth' %}"
+       class="card bg-base-100 border border-base-300 hover:border-base-content/40 transition-colors">
+        <div class="card-body p-5">
+            <div class="flex items-center gap-2">
+                <span class="text-base-content/70">
+                    <svg class="icon-md" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM5 20a7 7 0 0 1 14 0"/>
+                    </svg>
+                </span>
+                <h2 class="card-title text-base">Authentication</h2>
+            </div>
+            <p class="text-sm text-base-content/60">LDAP, Entra ID, SAML, OIDC and Duo backends.</p>
+            <div class="flex justify-end mt-2 text-base-content/40">
+                <svg class="icon-sm" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </div>
         </div>
-    </div>
+    </a>
 
-    {# ── Stub: Authentication ─────────────────────────────────────── #}
-    <div class="card bg-base-100 shadow">
-        <div class="card-body">
-            <h2 class="card-title text-base">Authentication <span class="badge">Coming soon</span></h2>
-            <p class="text-sm opacity-70 mt-0">Currently <strong>local accounts only</strong>. LDAP, Entra ID, generic SAML 2.0, generic OIDC, and Duo Universal Prompt (layered MFA) each get a config screen on the roadmap.</p>
+    <a href="{% url 'core:settings_users' %}"
+       class="card bg-base-100 border border-base-300 hover:border-base-content/40 transition-colors">
+        <div class="card-body p-5">
+            <div class="flex items-center gap-2">
+                <span class="text-base-content/70">
+                    <svg class="icon-md" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM22 20v-2a4 4 0 0 0-3-3.87M16 2.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                </span>
+                <h2 class="card-title text-base">Admin users</h2>
+            </div>
+            <p class="text-sm text-base-content/60">Add or remove admin accounts, reset passwords, rotate MFA.</p>
+            <div class="flex justify-end mt-2 text-base-content/40">
+                <svg class="icon-sm" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </div>
         </div>
-    </div>
+    </a>
 
-    {# ── Stub: Email ──────────────────────────────────────────────── #}
-    <div class="card bg-base-100 shadow">
-        <div class="card-body">
-            <h2 class="card-title text-base">Email <span class="badge">Coming soon</span></h2>
-            <p class="text-sm opacity-70 mt-0">SMTP and Microsoft Graph API backends with a live test-send, password-reset emails, and the MFA email-recovery bypass are on the roadmap.</p>
+    <a href="{% url 'core:settings_email' %}"
+       class="card bg-base-100 border border-base-300 hover:border-base-content/40 transition-colors">
+        <div class="card-body p-5">
+            <div class="flex items-center gap-2">
+                <span class="text-base-content/70">
+                    <svg class="icon-md" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16v12H4zM4 7l8 6 8-6"/>
+                    </svg>
+                </span>
+                <h2 class="card-title text-base">Email</h2>
+            </div>
+            <p class="text-sm text-base-content/60">SMTP or Graph backend for notifications.</p>
+            <div class="flex justify-end mt-2 text-base-content/40">
+                <svg class="icon-sm" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </div>
         </div>
-    </div>
+    </a>
 
-    {# ── Stub: Syslog ─────────────────────────────────────────────── #}
-    <div class="card bg-base-100 shadow">
-        <div class="card-body">
-            <h2 class="card-title text-base">Syslog forwarding <span class="badge">Coming soon</span></h2>
-            <p class="text-sm opacity-70 mt-0">DB-driven destination + severity threshold. Default logging is file-only at <code class="font-mono text-xs">/var/log/forgedca/django.log</code>.</p>
+    <a href="{% url 'core:settings_syslog' %}"
+       class="card bg-base-100 border border-base-300 hover:border-base-content/40 transition-colors">
+        <div class="card-body p-5">
+            <div class="flex items-center gap-2">
+                <span class="text-base-content/70">
+                    <svg class="icon-md" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7l-4 5 4 5M16 7l4 5-4 5M14 5l-4 14"/>
+                    </svg>
+                </span>
+                <h2 class="card-title text-base">Syslog</h2>
+            </div>
+            <p class="text-sm text-base-content/60">Forward events to a syslog server.</p>
+            <div class="flex justify-end mt-2 text-base-content/40">
+                <svg class="icon-sm" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </div>
         </div>
-    </div>
+    </a>
 
-    {# ── Stub: Admin users ────────────────────────────────────────── #}
-    <div class="card bg-base-100 shadow">
-        <div class="card-body">
-            <h2 class="card-title text-base">Admin users <span class="badge">Coming soon</span></h2>
-            <p class="text-sm opacity-70 mt-0">Add / remove admin accounts, reset passwords, force-rotate MFA. The initial admin was created by install.sh; extra admins can be added via the Django admin at <a href="/admin/" class="link">/admin/</a> for now.</p>
-        </div>
-    </div>
 </div>
 {% endblock %}

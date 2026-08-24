@@ -34,7 +34,7 @@ class SignWebuiView(LoginRequiredMixin, View):
                 "it back to this node — leaf certificates should not be signed "
                 "directly off a Root or Intermediate.",
             )
-            return redirect("core:settings")
+            return redirect("core:settings_webui_cert")
 
         # The Settings card POSTs the SAN list alongside the rotate button so
         # admins can fix a missing FQDN in one click instead of needing a
@@ -51,7 +51,7 @@ class SignWebuiView(LoginRequiredMixin, View):
             dns, ips = parse_sans(raw_sans)
             if not dns and not ips:
                 messages.error(request, "Add at least one DNS name or IP to the SAN list.")
-                return redirect("core:settings")
+                return redirect("core:settings_webui_cert")
             config.webui_sans = "\n".join(dns + ips)
             config.save(update_fields=["webui_sans"])
 
@@ -59,7 +59,7 @@ class SignWebuiView(LoginRequiredMixin, View):
             keygen.generate_webui_cert(config)
         except keygen.KeygenError as e:
             messages.error(request, f"Web UI certificate issuance failed: {e}")
-            return redirect("core:settings")
+            return redirect("core:settings_webui_cert")
 
         config.save(update_fields=["webui_cert_path", "webui_key_path"])
         messages.success(
@@ -67,4 +67,4 @@ class SignWebuiView(LoginRequiredMixin, View):
             "Web UI certificate swapped. Refresh this page — if you've installed "
             "the Root on this device, the browser will show a trusted lock.",
         )
-        return redirect("core:settings")
+        return redirect("core:settings_webui_cert")

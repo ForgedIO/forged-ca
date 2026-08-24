@@ -43,7 +43,7 @@
             {% if not step_ca.active %}
                 <div class="alert alert-warning mt-3 text-sm">
                     <div class="flex-1">
-                        <strong>step-ca isn't running.</strong> ACME clients will fail with connection refused until it's started. Start it here, or head to <a class="link" href="{% url 'core:settings' %}">Settings</a> for logs &amp; controls.
+                        <strong>step-ca isn't running.</strong> ACME clients will fail with connection refused until it's started. Start it here, or head to <a class="link" href="{% url 'core:settings_daemon' %}">Settings</a> for logs &amp; controls.
                     </div>
                     {% if step_ca.substate == 'activating' or step_ca.substate == 'failed' %}
                         <form method="post" action="{% url 'ca:daemon_action' 'restart' %}" class="inline">

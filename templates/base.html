@@ -29,6 +29,38 @@
     <link rel="icon" type="image/png" sizes="16x16" href="{% static 'img/forgedca-keyhole-favicon-16.png' %}">
     <link rel="shortcut icon" href="{% static 'img/forgedca-keyhole.ico' %}">
     <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    <style>
+      /* ------------------------------------------------------------------
+       * Desktop (lg) sidebar: pin it to the viewport.
+       *
+       * daisyUI's `.lg:drawer-open` rules flip the sidebar from its base
+       * `position:fixed` to `position:sticky`. That sticky variant scrolls
+       * with the document on this layout, so the menu drifts off-screen
+       * while the page content scrolls, and a full-page navigation (clicking
+       * a Settings sub-page) resets it to the top. Reverting the sidebar to
+       * `position:fixed` on desktop — the same pattern that already works on
+       * mobile — pins it to the viewport with its own internal scroll, and
+       * the scroll-restore script below keeps the menu where the user left
+       * it across navigations.
+       * ------------------------------------------------------------------ */
+      @media (min-width: 1024px) {
+        .drawer.lg\:drawer-open > .drawer-side {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: auto;
+          width: 16rem;                 /* matches the w-64 aside */
+          height: 100vh;
+          overflow-y: auto;
+          overflow-x: hidden;
+          transform: none;
+          z-index: 40;
+        }
+        .drawer.lg\:drawer-open > .drawer-content {
+          margin-left: 16rem;
+        }
+      }
+    </style>
 </head>
 <body class="min-h-screen bg-base-200">
 
@@ -106,6 +138,43 @@
     document.documentElement.setAttribute('data-theme', next);
     try { localStorage.setItem('forgedca-theme', isDark ? 'light' : 'dark'); } catch (_) {}
   });
+
+  /* --------------------------------------------------------------------
+   * Preserve the sidebar's vertical scroll position across navigations.
+   *
+   * On desktop the sidebar is a fixed, independently-scrolling column
+   * (see the <style> block in <head>). Without this, clicking a menu link
+   * causes a full-page load and the browser resets the sidebar's scrollTop
+   * to 0 — so the menu "jumps to the top" even though the sidebar is
+   * pinned. We persist the scroll offset in sessionStorage and restore it
+   * on the next load.
+   * -------------------------------------------------------------------- */
+  (function () {
+    var KEY = 'forgedca-sidebar-scroll';
+    var scroller = document.querySelector('.drawer-side');
+    if (!scroller) return;
+
+    // Restore on load (rAF so the layout is settled before we jump).
+    requestAnimationFrame(function () {
+      var saved;
+      try { saved = sessionStorage.getItem(KEY); } catch (_) { saved = null; }
+      if (saved !== null) {
+        var v = parseInt(saved, 10);
+        if (!isNaN(v)) scroller.scrollTop = v;
+      }
+    });
+
+    // Persist on scroll (debounced) and on unload.
+    var t;
+    function save() {
+      try { sessionStorage.setItem(KEY, String(scroller.scrollTop)); } catch (_) {}
+    }
+    scroller.addEventListener('scroll', function () {
+      clearTimeout(t);
+      t = setTimeout(save, 120);
+    });
+    window.addEventListener('beforeunload', save);
+  })();
 </script>
 
 </body>

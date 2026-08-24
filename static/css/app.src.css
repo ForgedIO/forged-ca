@@ -177,15 +177,60 @@
         border: 1px solid hsl(var(--b3) / 0.7);
     }
 
+    /* ---------------------------------------------------------------------
+     * PEM / certificate viewer
+     *
+     * The certificate PEM is displayed inside a card whose surface is blue in
+     * both themes, and it was previously wrapped in `alert alert-info`, which
+     * forces white text (var(--inc)). Raw Tailwind colour utilities
+     * (text-black) can also be dropped by the build if they aren't scanned,
+     * which produced white-on-white in dark mode. Lock the viewer to a
+     * white surface with charcoal text so it reads identically in both
+     * themes without depending on the parent alert or a scanned utility.
+     * --------------------------------------------------------------------- */
+    .pem-viewer {
+        background-color: #FFFFFF;
+        color: #1B1F26;   /* charcoal — always dark text on white */
+        border: 1px solid hsl(var(--b3) / 0.7);
+    }
+    /* The PEM box lives inside an alert-info card that forces white text
+       (var(--inc)). Set the colour directly on the content so it cannot be
+       inherited from the alert regardless of cascade order. */
+    .pem-viewer * {
+        color: #1B1F26;
+    }
+
     /* Details/summary — make the clickable area feel like a button. */
     details > summary {
         list-style: none;
+        cursor: pointer;
     }
     details > summary::-webkit-details-marker {
         display: none;
     }
     details > summary:hover {
         background-color: hsl(var(--b2));
+    }
+
+    /* Settings dropdown — the gear + label + chevron must sit on one line,
+       and the chevron rotates when the group is open so it reads clearly as
+       a collapsible. */
+    .settings-dropdown > details > summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+    }
+    /* daisyUI auto-injects a ::after chevron on any .menu li>details>summary.
+       Suppress it here so only our custom SVG chevron is visible. */
+    .settings-dropdown > details > summary::after {
+        display: none;
+    }
+    .settings-chevron {
+        transition: transform 150ms ease;
+    }
+    .settings-dropdown details[open] .settings-chevron {
+        transform: rotate(180deg);
     }
 
     /* ---------------------------------------------------------------------
