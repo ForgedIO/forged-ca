@@ -1,5 +1,6 @@
 """CSR parsing utilities for Slice 4."""
 
+import logging
 from dataclasses import dataclass
 from typing import Optional
 
@@ -8,6 +9,8 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed25519, rsa, padding
 from cryptography.hazmat.primitives.asymmetric.ec import SECP256R1, SECP384R1
 from cryptography.x509.oid import ExtensionOID, NameOID, ExtendedKeyUsageOID
+
+logger = logging.getLogger(__name__)
 
 
 # EKU short name to OID mapping
@@ -42,7 +45,7 @@ class CsrError(Exception):
     pass
 
 
-@dataclass(frozen=True)
+@dataclass
 class ParsedCsr:
     """Parsed CSR with all relevant information."""
     common_name: str
@@ -122,6 +125,7 @@ def parse_csr(pem: str) -> ParsedCsr:
     
     try:
         # Load the CSR
+        logger.debug(f"Attempting to load CSR: first 50 chars = {repr(pem[:50])}, length = {len(pem)}")
         csr = x509.load_pem_x509_csr(pem.encode("utf-8"))
     except ValueError as e:
         raise CsrError(f"Could not parse CSR: {str(e)}")
@@ -129,8 +133,13 @@ def parse_csr(pem: str) -> ParsedCsr:
         raise CsrError(f"Failed to parse CSR: {str(e)}")
     
     # Verify the CSR signature
+    # NOTE: in cryptography >= 42.0 is_signature_valid is a *property* (bool),
+    # not a method. Do not call it with a key argument.
     try:
-        csr.is_signature_valid(csr.public_key())
+        if not csr.is_signature_valid:
+            raise CsrError("CSR signature is invalid. The CSR may be corrupted or malformed.")
+    except CsrError:
+        raise
     except Exception as e:
         raise CsrError(f"CSR signature is invalid. The CSR may be corrupted or malformed.")
     

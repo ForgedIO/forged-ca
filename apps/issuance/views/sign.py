@@ -2,6 +2,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.shortcuts import redirect, render
 from django.views import View
+import logging
 
 from apps.issuance.forms import CsrSignForm
 from apps.issuance.helpers.csr import parse_csr, CsrError
@@ -10,6 +11,8 @@ from apps.issuance.helpers.signer import sign_csr, SignerError
 from apps.issuance.models import IssuedCertificate
 from apps.nodes.models import NodeConfig
 from apps.templates_app.models import CertTemplate
+
+logger = logging.getLogger(__name__)
 
 
 class CsrSignView(LoginRequiredMixin, View):
@@ -36,6 +39,7 @@ class CsrSignView(LoginRequiredMixin, View):
 
         # Parse the CSR
         csr_pem = form.get_csr_pem()
+        logger.debug(f"CSR length: {len(csr_pem)}, first 50 chars: {repr(csr_pem[:50])}")
         try:
             parsed = parse_csr(csr_pem)
         except CsrError as e:
@@ -69,7 +73,7 @@ class CsrSignView(LoginRequiredMixin, View):
         # Update form with selected template for display in preview
         form.fields['template'].initial = template.id
         return render(request, self.template_name, self._context(
-            form, parsed, template, is_passthrough=True, show_preview=True
+            form, parsed, template, is_passthrough=is_passthrough, show_preview=True
         ))
 
     def _context(self, form, parsed=None, template=None, is_passthrough=False, show_preview=False):
@@ -140,6 +144,8 @@ class CsrSignConfirmView(LoginRequiredMixin, View):
                         "template": template,
                         "validation_errors": reasons,
                         "show_preview": True,
+                        "step": 1,
+                        "step_label": "Sign Certificate from CSR",
                     })
 
             # Sign the certificate

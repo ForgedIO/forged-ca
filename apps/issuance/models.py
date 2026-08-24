@@ -1,4 +1,6 @@
 """Models for certificate issuance."""
+import re
+
 from django.db import models
 from django.conf import settings
 
@@ -109,3 +111,67 @@ class IssuedCertificate(models.Model):
 
     def __str__(self):
         return f"{self.common_name or 'Unknown'} ({self.serial[:8]}...)"
+
+    @property
+    def filename_stem(self) -> str:
+        """A filesystem/URL-safe filename derived from the CN (serial fallback)."""
+        base = self.common_name or self.serial[:16]
+        base = re.sub(r"[^A-Za-z0-9._-]", "-", base).strip("-") or "certificate"
+        return base
+
+    def get_fullchain_pem(self) -> str:
+        """Return the leaf plus its issuer chain, most-specific-first.
+
+        Order is leaf -> issuing -> intermediate -> root, the standard layout
+        for a server ``fullchain.pem``. The issuer chain is walked upward from
+        the leaf by matching each certificate's issuer DN against the
+        locally-configured CA tier certificates (issuing/intermediate/root).
+        Falls back to the leaf alone if no issuer can be resolved locally.
+        """
+        import cryptography.x509
+        from cryptography.hazmat.primitives import serialization
+        from pathlib import Path
+        from apps.nodes.models import NodeConfig
+
+        parts = [self.certificate_pem.strip()]
+        leaf = cryptography.x509.load_pem_x509_certificate(
+            self.certificate_pem.encode("utf-8")
+        )
+
+        # Index the local CA certs by subject DN so we can resolve issuer -> cert.
+        ca_by_subject = {}
+        try:
+            config = NodeConfig.load()
+            for path_str in (
+                config.issuing_cert_path,
+                config.intermediate_cert_path,
+                config.root_cert_path,
+            ):
+                if path_str and Path(path_str).is_file():
+                    try:
+                        ca = cryptography.x509.load_pem_x509_certificate(
+                            Path(path_str).read_bytes()
+                        )
+                        ca_by_subject[ca.subject] = ca.public_bytes(
+                            encoding=serialization.Encoding.PEM
+                        ).decode("utf-8").strip()
+                    except Exception:
+                        pass
+        except Exception:
+            return "\n".join(parts) + "\n"
+
+        # Walk up from the leaf, following each certificate's issuer DN.
+        current = leaf
+        seen = set()
+        for _ in range(10):
+            issuer_dn = current.issuer
+            if issuer_dn in ca_by_subject and issuer_dn not in seen:
+                pem = ca_by_subject[issuer_dn]
+                parts.append(pem)
+                seen.add(issuer_dn)
+                current = cryptography.x509.load_pem_x509_certificate(
+                    pem.encode("utf-8")
+                )
+            else:
+                break
+        return "\n".join(parts) + "\n"

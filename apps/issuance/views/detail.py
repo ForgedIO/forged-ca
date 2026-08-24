@@ -1,8 +1,10 @@
+import cryptography.x509
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import Http404
 from django.shortcuts import render
 from django.views import View
 
+from apps.issuance.helpers.csr import EKU_OID_TO_SHORT
 from apps.issuance.models import IssuedCertificate
 
 
@@ -18,7 +20,6 @@ class CertificateDetailView(LoginRequiredMixin, View):
             raise Http404("Certificate not found")
         
         # Parse the certificate PEM for display
-        import cryptography.x509
         try:
             cert_obj = cryptography.x509.load_pem_x509_certificate(
                 certificate.certificate_pem.encode('utf-8')
@@ -46,7 +47,9 @@ class CertificateDetailView(LoginRequiredMixin, View):
                 eku_ext = cert_obj.extensions.get_extension_for_oid(
                     cryptography.x509.oid.ExtensionOID.EXTENDED_KEY_USAGE
                 )
-                cert_details['ekus'] = [eku.dotted_string for eku in eku_ext.value]
+                cert_details['ekus'] = [
+                    EKU_OID_TO_SHORT.get(eku, eku.dotted_string) for eku in eku_ext.value
+                ]
             except cryptography.x509.ExtensionNotFound:
                 cert_details['ekus'] = []
             
