@@ -76,6 +76,20 @@
                         <span class="font-semibold">Issued On:</span>
                         <div>{{ certificate.created_at|date:"M d, Y H:i:s" }}</div>
                     </div>
+
+                    <div>
+                        <span class="font-semibold">Expires On:</span>
+                        <div>
+                            <span class="font-mono text-sm">{{ certificate.not_after|date:"M d, Y H:i:s" }}</span>
+                            {% if certificate.is_expired %}
+                            <span class="badge badge-error ml-2">Expired</span>
+                            {% elif certificate.is_near_expiry %}
+                            <span class="badge badge-warning ml-2">Expiring soon</span>
+                            {% else %}
+                            <span class="badge badge-success ml-2">Valid</span>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -158,9 +172,9 @@
                         </div>
                     </div>
                     
-                    <div class="alert alert-info">
-                        <div class="text-xs overflow-x-auto whitespace-pre-wrap font-mono bg-base-100 p-4 rounded border border-base-300 max-h-96 overflow-y-auto">
-                            {{ certificate.certificate_pem }}
+                    <div class="alert alert-info w-full">
+                        <div class="pem-viewer w-full text-left">
+                            <div class="text-xs overflow-x-auto whitespace-pre-wrap font-mono p-4 rounded max-h-96 overflow-y-auto text-left">{{ certificate.certificate_pem }}</div>
                         </div>
                     </div>
                 </div>
